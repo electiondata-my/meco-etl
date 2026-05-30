@@ -1,3 +1,8 @@
+# local buckets
+api.electiondata.my/*
+internal.electiondata.my/*
+lake.electiondata.my/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
