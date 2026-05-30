@@ -16,9 +16,9 @@ Outputs:
 
 import os
 import json as j
-import pandas as pd
-from datetime import datetime
 from glob import glob as g
+from datetime import datetime
+import pandas as pd
 
 from dotenv import load_dotenv
 
@@ -152,6 +152,7 @@ def make_candidates_jsons():
 def upload_candidates_jsons(client, bucket, file_pattern="candidates/*"):
     """Upload data files matching pattern to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    print(f"\nUploading {len(files):,.0f} files to R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 

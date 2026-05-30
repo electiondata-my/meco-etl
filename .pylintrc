@@ -1,0 +1,15 @@
+[MASTER]
+disable=
+    R0801,  # Similar lines in multiple files
+    R0914,  # Too many local variables
+    E0401,  # Unable to import module
+    W0718,  # Broad exception caught
+    R1732,  # Consider using with for resource-allocating operations
+    R0913,  # Too many arguments
+    R0917,  # Too many positional arguments
+    R1702,  # Too many nested blocks
+    R0912,  # Too many branches
+    R0915,  # Too many statements (60/50)
+    W0102,  # Dangerous default value as argument
+[FORMAT]
+max-line-length=250
