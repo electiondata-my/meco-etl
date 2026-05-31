@@ -1,3 +1,6 @@
+# local-only files
+*.ipynb
+
 # local buckets
 api.electiondata.my/*
 internal.electiondata.my/*

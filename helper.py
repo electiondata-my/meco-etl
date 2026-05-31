@@ -7,6 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 from typing import List
 
+import requests
+
 import boto3
 from boto3.s3.transfer import TransferConfig
 from dotenv import load_dotenv
@@ -77,6 +79,39 @@ def upload_bulk(client=None, bucket=None, files_to_upload=None, max_workers=50):
             print(message)
 
     return [(source, msg) for source, (success, msg) in results.items() if not success]
+
+
+def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
+    """
+    Purge Cloudflare cache for a list of file keys.
+
+    Args:
+        file_keys: List of R2 object keys e.g. ["parties/dropdown.json", "parties/all.json"]
+        base_url: Public base URL e.g. "https://internal.electiondata.my"
+
+    Requires env vars:
+        CF_ZONE_ID: Cloudflare Zone ID
+        CF_CACHE_PURGE_TOKEN: Cloudflare API token with Cache Purge permission
+    """
+
+    zone_id = os.getenv("CF_ZONE_ID")
+    api_token = os.getenv("CF_CACHE_PURGE_TOKEN")
+
+    urls = [f"{base_url.rstrip('/')}/{key}" for key in file_keys]
+
+    # Cloudflare allows max 30 URLs per request
+    for i in range(0, len(urls), 30):
+        batch = urls[i : i + 30]
+        resp = requests.post(
+            f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache",
+            headers={"Authorization": f"Bearer {api_token}"},
+            json={"files": batch},
+        )
+        resp.raise_for_status()
+        result = resp.json()
+        if not result.get("success"):
+            raise RuntimeError(f"Cache purge failed: {result.get('errors')}")
+        print(f"Purged {len(batch)} URLs from cache")
 
 
 def write_csv_parquet(filepath, df=None):

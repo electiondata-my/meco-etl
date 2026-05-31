@@ -24,7 +24,7 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import write_parquet, get_r2_client, upload_bulk
+from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -161,6 +161,14 @@ def upload_candidates_jsons(client, bucket, file_pattern="candidates/*"):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
+def purge_candidates_cache(file_pattern="candidates/*"):
+    """Purge Cloudflare cache for candidate JSON files matching pattern."""
+    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    keys = [f.replace(PATH_LOCAL_INTERNAL, "") for f in files]
+    print(f"\nPurging {len(keys):,.0f} files from cache for {PATH_LOCAL_INTERNAL[:-1]}")
+    purge_cf_cache(keys, base_url=f"https://{PATH_LOCAL_INTERNAL[:-1]}")
+
+
 if __name__ == "__main__":
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
@@ -171,6 +179,7 @@ if __name__ == "__main__":
     make_candidates_df()
     make_candidates_jsons()
     upload_candidates_jsons(CLIENT, BUCKET)
+    purge_candidates_cache()
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")

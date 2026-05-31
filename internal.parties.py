@@ -12,7 +12,7 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import write_parquet, get_r2_client, upload_bulk
+from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -143,7 +143,7 @@ def make_parties_jsons():
     # -------- dropdown --------
     data = {"data": []}
 
-    df = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}consol_ballots.parquet")
+    df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}parties.parquet")
     parties_contested = list(df.party_uid.unique())
 
     df = pd.read_parquet(
@@ -225,6 +225,14 @@ def upload_parties_jsons(client, bucket, file_pattern="parties/*"):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
+def purge_parties_cache(file_pattern="parties/*"):
+    """Purge Cloudflare cache for party JSON files matching pattern."""
+    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    keys = [f.replace(PATH_LOCAL_INTERNAL, "") for f in files]
+    print(f"\nPurging {len(keys):,.0f} files from cache for {PATH_LOCAL_INTERNAL[:-1]}")
+    purge_cf_cache(keys, base_url=f"https://{PATH_LOCAL_INTERNAL[:-1]}")
+
+
 if __name__ == "__main__":
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
@@ -235,6 +243,7 @@ if __name__ == "__main__":
     make_parties_df()
     make_parties_jsons()
     upload_parties_jsons(CLIENT, BUCKET)
+    purge_parties_cache()
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
