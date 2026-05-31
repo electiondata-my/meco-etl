@@ -50,14 +50,16 @@ def make_parties_df():
     map_ge_date = dict(zip(ds.election_name, ds.date))
 
     pf = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}lookup_party.parquet")
+    map_party_uid_party_acronym = dict(zip(pf.party_uid, pf.party))
     pf["uid"] = pf.party_uid.str.split("-").str[0]
     pf = pf[["uid", "party_uid", "party"]].drop_duplicates(subset=["uid"], keep="last")
     map_uid_party_uid = dict(zip(pf.uid, pf.party_uid))
-    map_uid_party_acronym = dict(zip(pf.party_uid, pf.party))
 
     col_idx = [
         "party_uid",
         "party",
+        "known_as_uid",
+        "known_as",
         "coalition",
         "coalition_uid",
         "type",
@@ -66,8 +68,10 @@ def make_parties_df():
         "date",
     ]
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
+    df["known_as_uid"] = df["party_uid"]
+    df["known_as"] = df["party_uid"].map(map_party_uid_party_acronym)
     df["party_uid"] = df.party_uid.str.split("-").str[0].map(map_uid_party_uid)
-    df["party"] = df.party_uid.map(map_uid_party_acronym)
+    df["party"] = df.party_uid.map(map_party_uid_party_acronym)
     df = df[df.election_name != "By-Election"]  # Remove By-Elections, we are not interested in them
     df = df.drop(
         [
@@ -124,8 +128,8 @@ def make_parties_df():
     write_parquet(f"{PATH_LOCAL_INTERNAL}parties", df)
     df_party = df.copy()
 
-    df = df.drop(columns=["party_uid", "party"])
-    df = df.groupby(col_idx[2:]).sum().reset_index()
+    df = df.drop(columns=["party_uid", "party", "known_as_uid", "known_as"])
+    df = df.groupby(col_idx[4:]).sum().reset_index()
     df.seats_total = ((df.seats_contested * 100) / (df.seats_contested_perc)).round(0).astype(int)
     df.votes_total = ((df.votes * 100) / (df.votes_perc)).round(0).astype(int)
     for c in ["votes_total", "seats_total"]:
@@ -133,8 +137,6 @@ def make_parties_df():
             df.drop_duplicates(subset=["election_name", "state", c])
         )
     write_parquet(f"{PATH_LOCAL_INTERNAL}coalitions", df)
-
-    return df_party, df
 
 
 def make_parties_jsons():
@@ -174,6 +176,8 @@ def make_parties_jsons():
     col_party = [
         "state",
         "type",
+        "known_as_uid",
+        "known_as",
         "coalition",
         "coalition_uid",
         "election_name",
