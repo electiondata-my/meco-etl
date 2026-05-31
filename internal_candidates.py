@@ -8,9 +8,11 @@ It:
 - Uploads processed outputs to R2
 
 Inputs:
-- Parquet files at PATH_RESULTS_HEADLINE
+-  PATH_RESULTS_HEADLINE/consol_ballots.parquet
+-  PATH_RESULTS_HEADLINE/consol_stats.parquet
 
 Outputs:
+- internal.electiondata.my/candidates.parquet
 - Processed candidate-level tables uploaded to R2 in minified JSON format
 """
 
@@ -22,7 +24,7 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import get_r2_client, upload_bulk
+from helper import write_parquet, get_r2_client, upload_bulk
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -40,8 +42,11 @@ def make_candidates_df():
     - {PATH_RESULTS_HEADLINE}consol_ballots.parquet
     - {PATH_RESULTS_HEADLINE}consol_stats.parquet
 
+    Outputs:
+    - internal.electiondata.my/candidates.parquet
+
     Returns:
-        pandas.DataFrame: DataFrame with candidates data
+        None
     """
     # fmt: off
     col_join = ["date", "election_name", "state", "seat"]
@@ -81,7 +86,7 @@ def make_candidates_df():
     df = pd.merge(df, sf, on=["date", "election_name", "state", "seat"], how="left")
     df.election_name = df.election_name.replace("BY-ELECTION", "By-Election")
     print(f"\nDataframe with {len(df.slug.unique()):,.0f} unique candidate produced")
-    return df
+    write_parquet(f"{PATH_LOCAL_INTERNAL}candidates", df)
 
 
 def make_candidates_jsons():
@@ -98,8 +103,7 @@ def make_candidates_jsons():
         None
     """
     data = {"data": []}
-
-    candidates_df = make_candidates_df()
+    candidates_df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
 
     print(f"\nHandling {len(candidates_df.slug.unique()):,.0f} unique candidates")
     df = candidates_df.copy()
@@ -164,6 +168,7 @@ if __name__ == "__main__":
     CLIENT = get_r2_client()
     BUCKET = os.getenv("R2_BUCKET_INTERNAL")
 
+    make_candidates_df()
     make_candidates_jsons()
     upload_candidates_jsons(CLIENT, BUCKET)
 
