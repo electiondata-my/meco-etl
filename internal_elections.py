@@ -258,6 +258,43 @@ def make_elections_jsons():
         j.dump(all_data, f, sort_keys=True)
 
 
+def make_byelections_json():
+    col_prk = [
+        "seat",
+        "state",
+        "date",
+        "party_uid",
+        "party",
+        "coalition_uid",
+        "coalition",
+        "name",
+        "majority",
+        "majority_perc",
+        "voter_turnout",
+        "voter_turnout_perc",
+        "votes_rejected",
+        "votes_rejected_perc",
+    ]
+
+    df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat.parquet")
+    df = df[df.election_name == "By-Election"][col_prk]
+    df.date = pd.to_datetime(df.date).astype(str)
+
+    res = df.to_dict(orient="records")
+    res = [
+        {
+            k: ((None if pd.isna(v) else v) if not isinstance(v, list) else v)
+            for k, v in record.items()
+        }
+        for record in res
+    ]  # proper JSON null
+    data = {"data": []}
+    data["data"] = res
+
+    with open(f"{PATH_LOCAL_INTERNAL}elections/byelections.json", "w", encoding="utf-8") as f:
+        j.dump(data, f)
+
+
 def upload_elections_jsons(client, bucket, file_pattern="elections/**/*"):
     """Upload elections JSON files to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
@@ -296,6 +333,7 @@ if __name__ == "__main__":
     make_election_stats()
     make_elections_by_seat()
     make_elections_jsons()
+    make_byelections_json()
     upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
     upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
     purge_elections_cache()
