@@ -1,5 +1,6 @@
 # local-only files
 *.ipynb
+logs/*
 
 # local buckets
 api.electiondata.my/*
