@@ -9,11 +9,11 @@ Steps:
     4. Calculate map center and zoom level for visualization.
     5. Render map visualization using Plotly, highlighting the constituency/state area.
     6. Save the resulting image to the `api` directory, avoiding recomputation when possible.
-    7. Upload generated images in bulk to S3 storage using helper scripts.
+    7. Upload generated images in bulk to R2 storage using helper scripts.
 
 Notes:
     - Uses Plotly for map rendering.
-    - Utilizes helper functions for slug generation and S3 uploads.
+    - Utilizes helper functions for slug generation and R2 uploads.
     - Skip regeneration if image for a given area already exists in the output folder.
 """
 
@@ -27,7 +27,7 @@ import plotly.express as px
 import plotly.io as pio
 from dotenv import load_dotenv
 
-from helper import generate_slug, get_r2_client, upload_bulk
+from helper import generate_slug, get_r2_client, upload_bulk, purge_cf_cache_prefix
 
 load_dotenv()
 
@@ -134,11 +134,18 @@ def make_og_image(feature_row, crs=4326, feature_type="parlimen"):
 
 
 def upload_og_images(client, bucket, file_pattern="og-image/*"):
-    """Upload PNG images (or other data files) from `api/` to R2 in bulk."""
-    files = glob(f"{PATH_LOCAL_INTERNAL}{file_pattern}")
+    """Upload PNG images to R2 in bulk."""
+    files = glob(f"{PATH_LOCAL_INTERNAL}{file_pattern}.png")
     print(f"\nUploading {len(files):,.0f} files to R2")
-    files_to_upload = sorted([(f, f.replace(f"{PATH_LOCAL_INTERNAL}", "")) for f in files])
-    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+    files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120, content_type="image/png")
+
+
+def purge_og_cache(prefix="og-image/"):
+    """Purge Cloudflare cache for OG images by URL prefix."""
+    full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
+    print(f"\nPurging cache prefix: {full_prefix}")
+    purge_cf_cache_prefix([full_prefix])
 
 
 if __name__ == "__main__":
@@ -177,6 +184,7 @@ if __name__ == "__main__":
     CLIENT = get_r2_client()
     BUCKET = os.getenv("R2_BUCKET_INTERNAL")
     upload_og_images(CLIENT, BUCKET)
+    purge_og_cache()
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")

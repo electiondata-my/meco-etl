@@ -48,8 +48,18 @@ def get_transfer_config():
     )
 
 
-def upload_single(client=None, bucket=None, source_file=None, cloud_file=None):
-    """Upload a single file to S3/R2."""
+def upload_single(
+    client=None, bucket=None, source_file=None, cloud_file=None, content_type="application/json"
+):
+    """Upload a single file to S3/R2.
+
+    Args:
+        client: S3/R2 client
+        bucket: S3/R2 bucket
+        source_file: Source file path
+        cloud_file: Cloud file path
+        content_type: Content type of the file
+    """
     try:
         time_start = time.time()
         client.upload_file(
@@ -57,7 +67,7 @@ def upload_single(client=None, bucket=None, source_file=None, cloud_file=None):
             bucket,
             cloud_file,
             Config=get_transfer_config(),
-            ExtraArgs={"ContentType": "application/json"},
+            ExtraArgs={"ContentType": content_type},
         )
         duration = f"{time.time() - time_start:.1f} seconds"
         return source_file, True, f"SUCCESS ({duration}): {bucket}/{cloud_file}"
@@ -65,12 +75,22 @@ def upload_single(client=None, bucket=None, source_file=None, cloud_file=None):
         return source_file, False, f"FAILURE: {bucket}/{source_file}\n\n{e}"
 
 
-def upload_bulk(client=None, bucket=None, files_to_upload=None, max_workers=50):
-    """Upload multiple files to S3/R2 in parallel."""
+def upload_bulk(
+    client=None, bucket=None, files_to_upload=None, max_workers=50, content_type="application/json"
+):
+    """Upload multiple files to S3/R2 in parallel.
+
+    Args:
+        client: S3/R2 client
+        bucket: S3/R2 bucket
+        files_to_upload: List of tuples (source_file, cloud_file)
+        max_workers: Maximum number of workers
+        content_type: Content type of the files
+    """
     results = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_file = {
-            executor.submit(upload_single, client, bucket, source, cloud): source
+            executor.submit(upload_single, client, bucket, source, cloud, content_type): source
             for source, cloud in files_to_upload
         }
         for future in as_completed(future_to_file):
@@ -111,7 +131,36 @@ def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
         result = resp.json()
         if not result.get("success"):
             raise RuntimeError(f"Cache purge failed: {result.get('errors')}")
-        print(f"Purged {len(batch)} URLs from cache")
+        plural = "s" if len(batch) > 1 else ""
+        print(f"Purged {len(batch)} URL{plural} from cache")
+
+
+def purge_cf_cache_prefix(prefixes: list[str]) -> None:
+    """Purge Cloudflare cache by URL prefix (Pro plan+). Max 30 prefixes per call.
+
+    Args:
+        prefixes: List of URL prefixes without scheme e.g. ["internal.electiondata.my/og-image/"]
+
+    Requires env vars:
+        CF_ZONE_ID: Cloudflare Zone ID
+        CF_CACHE_PURGE_TOKEN: Cloudflare API token with Cache Purge permission
+    """
+    zone_id = os.getenv("CF_ZONE_ID")
+    api_token = os.getenv("CF_CACHE_PURGE_TOKEN")
+
+    for i in range(0, len(prefixes), 30):
+        batch = prefixes[i : i + 30]
+        resp = requests.post(
+            f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache",
+            headers={"Authorization": f"Bearer {api_token}"},
+            json={"prefixes": batch},
+        )
+        resp.raise_for_status()
+        result = resp.json()
+        if not result.get("success"):
+            raise RuntimeError(f"Cache purge failed: {result.get('errors')}")
+        plural = "es" if len(batch) > 1 else ""
+        print(f"Purged {len(batch)} prefix{plural} from cache")
 
 
 def write_csv_parquet(filepath, df=None):
