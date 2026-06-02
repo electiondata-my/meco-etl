@@ -123,7 +123,8 @@ def make_elections_by_seat():
         "slug", "seat_name", "seat", "state",
         "date", "election_name", "type",
         "party", "party_uid", "coalition", "coalition_uid", "name",
-        "majority", "majority_perc", "voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc",
+        "voters_total", "voter_turnout", "voter_turnout_perc",
+        "majority", "majority_perc", "votes_rejected", "votes_rejected_perc",
     ]
     # fmt: on
 
@@ -166,17 +167,18 @@ def make_elections_jsons():
         ],
         "by_seat": [
             "seat",
+            "state",
             "date",
+            "name",
             "party",
             "party_uid",
             "party_lost",
-            "name",
             "n_candidates",
-            "state",
-            "majority",
-            "majority_perc",
+            "voters_total",
             "voter_turnout",
             "voter_turnout_perc",
+            "majority",
+            "majority_perc",
             "votes_rejected",
             "votes_rejected_perc",
         ],
@@ -188,7 +190,7 @@ def make_elections_jsons():
     )
     dfm.coalition_uid = dfm.coalition_uid.astype(str).str.zfill(2) + "-" + dfm.coalition
 
-    # dfs for aggregate stats (voter turnout, votes rejected, n_candidates)
+    # dfs for aggregate stats (total voters, voter turnout, votes rejected, n_candidates)
     dfs = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_stats.parquet").fillna(0)
 
     # dft for table of statistics by seat; need to be joined with lf loser frame
