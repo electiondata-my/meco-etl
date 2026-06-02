@@ -126,7 +126,6 @@ def make_parties_df():
     print(f"\n{len(df.party_uid.unique()):,.0f} unique parties")
     print(f"{len(df.coalition_uid.unique()):,.0f} unique coalitions")
     write_parquet(f"{PATH_LOCAL_INTERNAL}parties", df)
-    df_party = df.copy()
 
     df = df.drop(columns=["party_uid", "party", "known_as_uid", "known_as"])
     df = df.groupby(col_idx[4:]).sum().reset_index()
