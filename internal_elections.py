@@ -1,5 +1,27 @@
 """
 Module: internal_elections.py
+
+This module processes and uploads election summary data for internal.electiondata.my.
+It:
+- Computes per-election voter turnout and rejected vote statistics grouped by state and type
+- Builds a per-seat winners table across all general elections and by-elections
+- Generates per-election JSON files (aggregate party stats and seat-level breakdowns)
+- Generates a consolidated by-elections JSON file
+- Uploads all election JSON files to R2 and copies them to the API bucket
+- Purges the Cloudflare cache for the elections prefix
+
+Inputs:
+- internal.electiondata.my/candidates.parquet (created by internal_candidates.py)
+- internal.electiondata.my/parties.parquet
+- PATH_RESULTS_HEADLINE/consol_ballots.parquet
+
+Outputs:
+- internal.electiondata.my/elections_stats.parquet
+- internal.electiondata.my/elections_by_seat.parquet
+- internal.electiondata.my/elections/{state}/{type}-{election}-aggregate.json
+- internal.electiondata.my/elections/{state}/{type}-{election}-by_seat.json
+- internal.electiondata.my/elections/all.json
+- internal.electiondata.my/elections/byelections.json (uploaded to R2)
 """
 
 import os
@@ -259,6 +281,16 @@ def make_elections_jsons():
 
 
 def make_byelections_json():
+    """
+    Builds a flat JSON file listing all by-election results.
+    It:
+        - Reads elections_by_seat.parquet and filters for By-Election rows only
+        - Normalises dates to ISO strings and converts NaN values to JSON null
+    Inputs:
+        internal.electiondata.my/elections_by_seat.parquet
+    Outputs:
+        internal.electiondata.my/elections/byelections.json
+    """
     col_prk = [
         "seat",
         "state",
