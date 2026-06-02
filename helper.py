@@ -135,6 +135,53 @@ def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
         print(f"Purged {len(batch)} URL{plural} from cache")
 
 
+def copy_bulk_within_r2(
+    client, source_bucket, dest_bucket, prefix, dest_prefix=None, max_workers=50
+):
+    """Copy all objects under a prefix from one R2 bucket to another in parallel.
+
+    Args:
+        client: R2 client
+        source_bucket: Source bucket name
+        dest_bucket: Destination bucket name
+        prefix: Key prefix to filter source objects e.g. "results/"
+        dest_prefix: Key prefix for destination keys — defaults to prefix if not set
+        max_workers: Maximum number of parallel copy workers
+    """
+    if dest_prefix is None:
+        dest_prefix = prefix
+
+    paginator = client.get_paginator("list_objects_v2")
+    keys = [
+        obj["Key"]
+        for page in paginator.paginate(Bucket=source_bucket, Prefix=prefix)
+        for obj in page.get("Contents", [])
+    ]
+    print(
+        f"\nCopying {len(keys):,.0f} files from {source_bucket}/{prefix} to {dest_bucket}/{dest_prefix}"
+    )
+
+    def copy_object(key):
+        dest_key = dest_prefix + key[len(prefix):]
+        client.copy_object(
+            CopySource={"Bucket": source_bucket, "Key": key},
+            Bucket=dest_bucket,
+            Key=dest_key,
+        )
+        return key
+
+    total = len(keys)
+    milestone = max(1, total // 100)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(copy_object, key): key for key in keys}
+        for i, future in enumerate(as_completed(futures), start=1):
+            future.result()
+            if i % milestone == 0 or i == total:
+                print(f"  {i / total:.0%} ({i:,.0f}/{total:,.0f})")
+
+    print(f"Done — copied {total:,.0f} files to {dest_bucket}")
+
+
 def purge_cf_cache_prefix(prefixes: list[str]) -> None:
     """Purge Cloudflare cache by URL prefix (Pro plan+). Max 30 prefixes per call.
 
