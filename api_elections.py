@@ -213,10 +213,11 @@ def make_elections_jsons():
     lf = lf[lf.result != "won"]
     lf.loc[lf.result == "won_uncontested", "party"] = "NEMO"
     lf.seat = lf.seat + ", " + lf.state
-    lf = lf[["date", "seat", "party"]].drop_duplicates().rename(columns={"party": "party_lost"})
+    lf = lf[["date", "seat", "party"]].rename(columns={"party": "party_lost"})
     lf = lf.groupby(["date", "seat"])["party_lost"].agg(list).reset_index()
     dft = pd.merge(dft, lf, on=["date", "seat"], how="left")
     dft["n_candidates"] = dft["party_lost"].apply(lambda x: len(x) + 1)
+    dft["party_lost"] = dft["party_lost"].apply(lambda x: list(dict.fromkeys(x)))
     dft.loc[dft.voter_turnout == 0, "n_candidates"] = 1
 
     assert (
