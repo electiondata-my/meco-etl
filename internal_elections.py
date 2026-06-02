@@ -12,7 +12,7 @@ import duckdb
 from dotenv import load_dotenv
 
 from helper import write_parquet, generate_slug
-from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix
+from helper import get_r2_client, upload_bulk, copy_bulk_within_r2, purge_cf_cache_prefix
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -120,7 +120,7 @@ def make_elections_jsons():
     """Generate election data files for API."""
     col_combo = ["state", "type", "election_name"]
     col_final = {
-        "summary": [
+        "by_party": [
             "party_uid",
             "party",
             "coalition",
@@ -200,13 +200,15 @@ def make_elections_jsons():
         == len(dfs.drop_duplicates(subset=col_combo))
         == len(dft.drop_duplicates(subset=col_combo))
     ), f"Mismatch between 3 components!\
-            summaries: {len(dfm.drop_duplicates(subset=col_combo))} \
+            by_party: {len(dfm.drop_duplicates(subset=col_combo))} \
             stats: {len(dfs.drop_duplicates(subset=col_combo))} \
             by_seat: {len(dft.drop_duplicates(subset=col_combo))}"
 
     dft.date = pd.to_datetime(dft.date).dt.date.astype(str)
     dfm.date = pd.to_datetime(dfm.date).dt.date.astype(str)
-    df = {"summary": dfm, "stats": dfs, "by_seat": dft}
+    df = {"by_party": dfm, "stats": dfs, "by_seat": dft}
+
+    all_data = {}
 
     for election_type in dfm.type.unique():
         tf = dfm[dfm.type == election_type].copy()
@@ -219,7 +221,7 @@ def make_elections_jsons():
                     os.makedirs(f"{PATH_LOCAL_INTERNAL}elections/{state}")
 
                 # now loop over the keys
-                data = {"summary": [], "stats": [], "by_seat": []}
+                data = {"by_party": [], "stats": [], "by_seat": []}
                 for key, value in df.items():
                     tf = value.copy()
                     tf = tf[
@@ -243,12 +245,44 @@ def make_elections_jsons():
                         for record in res
                     ]
                     data[key] = res
-                with open(
-                    f"{PATH_LOCAL_INTERNAL}elections/{state}/{election_type}-{election}.json",
-                    "w",
-                    encoding="utf-8",
-                ) as f:
-                    j.dump(data, f)
+
+                base = f"{PATH_LOCAL_INTERNAL}elections/{state}/{election_type}-{election}"
+                with open(f"{base}-aggregate.json", "w", encoding="utf-8") as f:
+                    j.dump({"by_party": data["by_party"], "stats": data["stats"]}, f)
+                with open(f"{base}-by_seat.json", "w", encoding="utf-8") as f:
+                    j.dump({"by_seat": data["by_seat"]}, f)
+
+                all_data.setdefault(state, {}).setdefault(election_type, {})[election] = data
+
+    with open(f"{PATH_LOCAL_INTERNAL}elections/all.json", "w", encoding="utf-8") as f:
+        j.dump(all_data, f, sort_keys=True)
+
+
+def upload_elections_jsons(client, bucket, file_pattern="elections/**/*"):
+    """Upload elections JSON files to R2."""
+    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    print(f"\nUploading {len(files):,.0f} files to R2")
+    files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def purge_elections_cache(prefix="elections/"):
+    """Purge Cloudflare cache for elections JSON files by URL prefix."""
+    full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
+    print(f"\nPurging cache prefix: {full_prefix}")
+    purge_cf_cache_prefix([full_prefix])
+
+
+def duplicate_for_api(client, source_bucket, dest_bucket, prefix="elections/"):
+    """Copy elections files (excluding all.json) from the internal bucket into v1/ on the API bucket."""
+    copy_bulk_within_r2(
+        client,
+        source_bucket,
+        dest_bucket,
+        prefix,
+        dest_prefix=f"v1/{prefix}",
+        exclude=["elections/all.json"],
+    )
 
 
 if __name__ == "__main__":
@@ -256,11 +290,16 @@ if __name__ == "__main__":
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
     CLIENT = get_r2_client()
-    BUCKET = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_API = os.getenv("R2_BUCKET_API")
 
     make_election_stats()
     make_elections_by_seat()
     make_elections_jsons()
+    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
+    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
+    purge_elections_cache()
+    duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")

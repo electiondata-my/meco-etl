@@ -136,7 +136,7 @@ def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
 
 
 def copy_bulk_within_r2(
-    client, source_bucket, dest_bucket, prefix, dest_prefix=None, max_workers=50
+    client, source_bucket, dest_bucket, prefix, dest_prefix=None, max_workers=50, exclude=None
 ):
     """Copy all objects under a prefix from one R2 bucket to another in parallel.
 
@@ -147,15 +147,18 @@ def copy_bulk_within_r2(
         prefix: Key prefix to filter source objects e.g. "results/"
         dest_prefix: Key prefix for destination keys — defaults to prefix if not set
         max_workers: Maximum number of parallel copy workers
+        exclude: List of keys to skip e.g. ["elections/all.json"]
     """
     if dest_prefix is None:
         dest_prefix = prefix
+    exclude_set = set(exclude or [])
 
     paginator = client.get_paginator("list_objects_v2")
     keys = [
         obj["Key"]
         for page in paginator.paginate(Bucket=source_bucket, Prefix=prefix)
         for obj in page.get("Contents", [])
+        if obj["Key"] not in exclude_set
     ]
     print(
         f"\nCopying {len(keys):,.0f} files from {source_bucket}/{prefix} to {dest_bucket}/{dest_prefix}"
