@@ -2,12 +2,19 @@
 
 import os
 import json as j
+from glob import glob as g
 from datetime import datetime
 import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import generate_slug, get_center_and_zoom
+from helper import (
+    generate_slug,
+    get_center_and_zoom,
+    get_r2_client,
+    upload_bulk,
+    purge_cf_cache_prefix,
+)
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -160,6 +167,7 @@ def make_seats():
 
     # ----- stitch everything together into a single JSON object -----
 
+    all_data = {}
     for slug in slugs:
         # get election results
         seat_type = sf[sf.slug == slug].type.iloc[0]
@@ -180,23 +188,48 @@ def make_seats():
         tfl = [
             {k: (None if pd.isna(v) else v) for k, v in record.items()} for record in tfl
         ]  # proper JSON null
-        data["results"] = tf + tfl
-        data["results"].sort(key=lambda x: x.get("date", ""), reverse=True)
+        results = tf + tfl
+        results.sort(key=lambda x: x.get("date", ""), reverse=True)
 
-        data["map_plot"]["zoom"] = vf[slug]["zoom"]
-        data["map_plot"]["center"] = vf[slug]["center"]
-        data["map_plot"]["polygons"] = pf[slug]
-        data["map_lineage"] = mf[slug]
+        all_data[slug] = {
+            "map_plot": {
+                "zoom": vf[slug]["zoom"],
+                "center": vf[slug]["center"],
+                "polygons": pf[slug],
+            },
+            "map_lineage": mf[slug],
+            "results": results,
+        }
 
-        with open(f"{PATH_LOCAL_INTERNAL}seats/current/{slug}.json", "w", encoding="utf-8") as f:
-            j.dump(data, f)
+    with open(f"{PATH_LOCAL_INTERNAL}seats/current/all.json", "w", encoding="utf-8") as f:
+        j.dump(all_data, f)
+
+
+def upload_current_seats_jsons(client, bucket, file_pattern="seats/current/*"):
+    """Upload data files matching pattern to R2."""
+    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    print(f"\nUploading {len(files):,.0f} files to R2")
+    files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def purge_current_seats_cache(prefix="seats/current/"):
+    """Purge Cloudflare cache for seat JSON files by URL prefix."""
+    full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
+    print(f"\nPurging cache prefix: {full_prefix}")
+    purge_cf_cache_prefix([full_prefix])
 
 
 if __name__ == "__main__":
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
+    CLIENT = get_r2_client()
+    BUCKET = os.getenv("R2_BUCKET_INTERNAL")
+
     make_seats()
+    upload_current_seats_jsons(CLIENT, BUCKET)
+    purge_current_seats_cache()
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
