@@ -1,6 +1,7 @@
 # local-only files
 *.ipynb
 logs/*
+CLAUDE.md
 
 # local buckets
 api.electiondata.my/*
