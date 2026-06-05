@@ -6,8 +6,12 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 from typing import List
+import warnings
+from math import log2
 
 import requests
+import geopandas as gpd
+import pandas as pd
 
 import boto3
 from boto3.s3.transfer import TransferConfig
@@ -165,7 +169,7 @@ def copy_bulk_within_r2(
     )
 
     def copy_object(key):
-        dest_key = dest_prefix + key[len(prefix):]
+        dest_key = dest_prefix + key[len(prefix) :]
         client.copy_object(
             CopySource={"Bucket": source_bucket, "Key": key},
             Bucket=dest_bucket,
@@ -409,3 +413,75 @@ def get_final_cols(file_type="ballots"):
             "ballots_not_returned_perc",
         ]
     return []
+
+
+def calculate_zoom(feature):
+    """
+    Calculate an appropriate zoom level for a GeoPandas GeoSeries/GeoDataFrame feature.
+
+    Args:
+        feature (GeoSeries or GeoDataFrame): A GeoSeries or GeoDataFrame whose total_bounds are used.
+
+    Returns:
+        float: A zoom level value, bounded between 0 and 20, with a bias for "zooming out" above level 3.
+    """
+    minx, miny, maxx, maxy = feature.total_bounds
+    x_margin = (maxx - minx) * 0.1
+    y_margin = (maxy - miny) * 0.1
+    minx -= x_margin
+    maxx += x_margin
+    miny -= y_margin
+    maxy += y_margin
+
+    lat_span = maxy - miny
+    lon_span = maxx - minx
+    scale = max(lon_span / 360, lat_span / 180)
+    zoom = -log2(scale) + 1
+
+    zoom = min(max(zoom, 0), 20)
+    return zoom - 2 if zoom > 3 else zoom
+
+
+def row_zoom(geom):
+    """
+    Calculate the zoom level for an individual geometry object.
+
+    Args:
+        geom (shapely Geometry): The geometry for which to calculate zoom.
+
+    Returns:
+        float: The calculated zoom level for the geometry.
+    """
+    return calculate_zoom(gpd.GeoSeries([geom]))
+
+
+def get_center_and_zoom(files=[]):
+    """
+    Compute zoom levels and center coordinates for a list of GeoParquet files.
+
+    Args:
+        files (list, optional): List of file paths to GeoParquet files. Defaults to empty list.
+
+    Returns:
+        pandas.DataFrame: DataFrame with columns ['seat', 'state', 'center', 'zoom'], containing
+            one row for each seat with its corresponding calculated zoom and center.
+            The center is [lon, lat] rounded to 6 decimal places and zoom is rounded to 1 decimal place.
+    """
+    res = pd.DataFrame(columns=["seat", "state", "center", "zoom"])
+    for f in files:
+        gf = gpd.read_parquet(f)
+        gf = gf.to_crs(epsg=4236)
+        seat_type = "dun" if "dun" in f else "parlimen"
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Geometry is in a geographic CRS. Results from 'centroid' are likely incorrect.*",
+            )
+            gf["center"] = gf.centroid
+        gf["center"] = gf["center"].apply(lambda p: [round(p.x, 6), round(p.y, 6)])
+        gf["zoom"] = gf["geometry"].apply(row_zoom)
+        gf.zoom = gf.zoom.round(1)
+        gf = gf[[seat_type, "state", "center", "zoom"]].rename(columns={seat_type: "seat"})
+        res = gf.copy() if len(res) == 0 else pd.concat([res, gf], axis=0, ignore_index=True)
+    return res
