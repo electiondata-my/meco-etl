@@ -68,7 +68,57 @@ def make_seats():
     ff = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}lineage/filter.parquet")
     ff.current_seat = ff.current_seat.apply(generate_slug)
     ff.seat = ff.seat + ", " + ff.state
-    sf = pd.merge(sf, ff, on=["election_name", "state", "seat"], how="left")
+
+    # add dates to ff to prepare for by-elections (where seat-election is not unique)
+    len_before = len(ff)
+    ff = pd.merge(ff, sf[["election_name", "state", "seat", "date"]], how="left")
+    assert len(ff) == len_before, "Explosion of filter frame after adding dates!"
+
+    # add by-elections into ff, based on sf
+    by_elections = sf[sf.election_name == "By-Election"][
+        ["election_name", "state", "seat", "date"]
+    ].drop_duplicates()
+    main_elections = sf[sf.election_name != "By-Election"][
+        ["election_name", "state", "seat", "date"]
+    ].drop_duplicates()
+    new_ff_rows = []
+
+    for _, by_row in by_elections.iterrows():
+        # find all main elections for the same seat+state prior to this by-election
+        candidates = main_elections[
+            (main_elections.seat == by_row.seat)
+            & (main_elections.state == by_row.state)
+            & (main_elections.date < by_row.date)
+        ]
+        if candidates.empty:
+            continue
+        # take the most recent one
+        prev = candidates.loc[candidates.date.idxmax()]
+        # check if that combo exists in ff
+        match = ff[
+            (ff.election_name == prev.election_name)
+            & (ff.state == prev.state)
+            & (ff.seat == prev.seat)
+            & (ff.date == prev.date)
+        ]
+        if match.empty:
+            continue
+        # inherit current_seat and insert row for the by-election
+        new_ff_rows.append(
+            {
+                "current_seat": match.iloc[0].current_seat,
+                "election_name": by_row.election_name,
+                "state": by_row.state,
+                "seat": by_row.seat,
+                "date": by_row.date,
+            }
+        )
+
+    if new_ff_rows:
+        ff = pd.concat([ff, pd.DataFrame(new_ff_rows)], ignore_index=True)
+        ff = ff.sort_values(by=["current_seat", "date"], ignore_index=True)
+
+    sf = pd.merge(sf, ff, on=["election_name", "state", "seat", "date"], how="left")
 
     # ----- lf (lineage frame): contains all lineage descriptions by seat -----
     lf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}lineage/desc.parquet")
@@ -193,7 +243,7 @@ def make_seats():
 
         all_data[slug] = {
             "map_plot": {
-                "zoom": vf[slug]["zoom"],
+                "zoom": vf[slug]["zoom"] + 0.75,
                 "center": vf[slug]["center"],
                 "polygons": pf[slug],
             },
