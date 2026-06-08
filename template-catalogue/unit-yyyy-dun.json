@@ -1,0 +1,110 @@
+{
+    "catalogue_type": "MAP",
+    "title": "YYYY Delimitation of UNIT (DUN)",
+    "data_as_of": "YYYY",
+    "last_updated": "2025-12-30",
+    "next_update": "—",
+    "download": {
+        "geojson": {
+            "link": "https://lake.electiondata.my/maps/delimitations/peninsular_YYYY_dun.geojson",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1921502
+        },
+        "topojson": {
+            "link": "https://lake.electiondata.my/maps/delimitations/peninsular_YYYY_dun.topojson",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1294338
+        },
+        "geoparquet": {
+            "link": "https://lake.electiondata.my/maps/delimitations/peninsular_YYYY_dun.parquet",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 897166
+        },
+        "flatgeobuf": {
+            "link": "https://lake.electiondata.my/maps/delimitations/peninsular_YYYY_dun.fgb",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1213752
+        },
+        "kml": {
+            "link": "https://lake.electiondata.my/maps/delimitations/peninsular_YYYY_dun.kml",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 2976247
+        }
+    },
+    "description": "Boundaries of DUN constituencies in UNIT following the YYYY delimitation exercise.",
+    "methodology": "This dataset was compiled from official electoral maps published by the Election Commission of Malaysia (EC). The foundational data was extracted from official maps covering all 19 approved delimitation exercises in Malaysia's history—from the pre-independence 1954 Malayan boundaries up to the 2019 Sabah delimitation.\n\nBecause the EC does not publicly distribute electoral boundaries in machine-readable formats, the boundaries had to be digitised from the official maps. This involved rasterising the source maps, geo-referencing them against contemporary basemaps, and then tracing the boundaries by hand.\n\nUsers should note that these boundaries were reconstructed specifically to support spatial analysis, historical mapping, and longitudinal research (such as measuring gerrymandering and malapportionment). They are optimized for data analysis and visualization rather than legal or cadastral precision, and are not intended for operational uses like determining the exact constituency assignment of a specific individual. For full technical details on the digitization and validation process, please refer to the preprint by [Thevananthan and Chacko (2025)](https://arxiv.org/abs/2512.24211).",
+    "fields": [
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] State in which the parliamentary constituency is located, e.g. 'Perlis'"
+        },
+        {
+            "name": "parlimen",
+            "title": "Parliament",
+            "description": "[String] Code (P.xxx) and name of the parliamentary constituency, e.g. 'P.001 Padang Besar'"
+        },
+        {
+            "name": "code_parlimen",
+            "title": "Parliament Code",
+            "description": "[String] Official code of the parliamentary constituency, e.g. 'P.001'"
+        },
+        {
+            "name": "dun",
+            "title": "DUN",
+            "description": "[String] Code (N.xx) and name of the DUN constituency, e.g. 'N.01 Titi Tinggi'"
+        },
+        {
+            "name": "code_dun",
+            "title": "DUN Code",
+            "description": "[String] Official code of the DUN constituency, e.g. 'N.01'"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should cite Thevananthan and Chacko (2025), which documents the digitisation and validation of the boundary data.",
+        "type": "article",
+        "id": "thevananthan2025malaysian",
+        "title": "The Malaysian Election Corpus (MECo): Electoral Maps and Cartograms from 1954 to 2025",
+        "author": "Thevananthan, Thevesh and Chacko, Danesh Prakash",
+        "journal": "arXiv preprint arXiv:2512.24211",
+        "year": "2025"
+    },
+    "display_options": {
+        "map": {
+            "mapbox_key": "peninsular_YYYY_dun",
+            "zoom": {
+                "desktop": 5,
+                "mobile": 5
+            },
+            "center": {
+                "desktop": [
+                    102.5,
+                    3.8
+                ],
+                "mobile": [
+                    102.5,
+                    3.8
+                ]
+            },
+            "fill_colour": "#e8263a",
+            "fill_opacity": 0.1,
+            "stroke_colour": "#e8263a",
+            "stroke_opacity": 1,
+            "stroke_width": 1.5
+        }
+    },
+    "sample_data": [
+        {
+            "state": "Perlis",
+            "parlimen": "P.001 Padang Besar",
+            "code_parlimen": "P.001",
+            "dun": "N.01 Titi Tinggi",
+            "code_dun": "N.01"
+        }
+    ]
+}
