@@ -12,12 +12,120 @@ from math import log2
 import requests
 import geopandas as gpd
 import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 
 import boto3
 from boto3.s3.transfer import TransferConfig
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def write_parquet(filepath, df=None):
+    """Write dataframe to Parquet format.
+
+    Args:
+        filepath (str): Base path for the output file
+        df (pd.DataFrame): DataFrame to write
+    """
+    df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
+    print(f"Wrote Parquet: {filepath}")
+
+
+def write_csv(filepath, df=None):
+    """Write dataframe to CSV format.
+
+    Args:
+        filepath (str): Base path for the output file
+        df (pd.DataFrame): DataFrame to write
+    """
+    df.to_csv(f"{filepath}.csv", index=False)
+    print(f"Wrote CSV: {filepath}")
+
+
+def write_csv_parquet(filepath, df=None):
+    """Write dataframe to both CSV and Parquet formats.
+
+    Args:
+        filepath (str): Base path for the output files
+        df (pd.DataFrame): DataFrame to write
+    """
+    df.to_csv(f"{filepath}.csv", index=False)
+    df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
+    print(f"Wrote CSV + Parquet: {filepath}")
+
+
+def write_csv_parquet_excel(filepath, df=None):
+    """Write dataframe to CSV, Parquet, and a formatted Excel file.
+
+    Args:
+        filepath (str): Base path for the output files
+        df (pd.DataFrame): DataFrame to write
+    """
+    df.to_csv(f"{filepath}.csv", index=False)
+    df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.freeze_panes = "A2"
+
+    header_fill = PatternFill(start_color="9B1C1C", end_color="9B1C1C", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF", name="Aptos")
+    center = Alignment(horizontal="center", vertical="center")
+    right = Alignment(horizontal="right", vertical="center")
+    left = Alignment(horizontal="left", vertical="center")
+
+    for col_idx, col_name in enumerate(df.columns, 1):
+        cell = ws.cell(row=1, column=col_idx, value=col_name)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center
+    ws.row_dimensions[1].height = 20
+
+    dtypes = {col: df[col].dtype for col in df.columns}
+
+    for row_idx, row_vals in enumerate(df.itertuples(index=False, name=None), 2):
+        ws.row_dimensions[row_idx].height = 20
+        for col_idx, (col_name, value) in enumerate(zip(df.columns, row_vals), 1):
+            # Convert pandas NA/NaT/NaN to None so openpyxl renders blank
+            if value is pd.NaT or (isinstance(value, float) and pd.isna(value)):
+                value = None
+            # Convert pandas Timestamp to Python datetime
+            elif hasattr(value, "to_pydatetime"):
+                value = value.to_pydatetime()
+            # Convert numpy int/float to Python native
+            elif hasattr(value, "item"):
+                value = value.item()
+
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.font = Font(name="Aptos")
+            dtype = dtypes[col_name]
+
+            if pd.api.types.is_datetime64_any_dtype(dtype):
+                cell.number_format = "YYYY-MM-DD"
+                cell.alignment = center
+            elif pd.api.types.is_integer_dtype(dtype):
+                cell.number_format = "#,##0"
+                cell.alignment = right
+            elif pd.api.types.is_float_dtype(dtype):
+                cell.number_format = "#,##0.##"
+                cell.alignment = right
+            else:
+                cell.alignment = left
+
+    for col_idx, col_name in enumerate(df.columns, 1):
+        col_letter = get_column_letter(col_idx)
+        max_len = len(str(col_name))
+        for val in df[col_name]:
+            if val is not None and not (isinstance(val, float) and pd.isna(val)):
+                max_len = max(max_len, len(str(val)))
+        ws.column_dimensions[col_letter].width = max_len + 4
+
+    wb.save(f"{filepath}.xlsx")
+    print(f"Wrote CSV + Parquet + Excel: {filepath}")
 
 
 @lru_cache(maxsize=1)
@@ -215,40 +323,6 @@ def purge_cf_cache_prefix(prefixes: list[str]) -> None:
             raise RuntimeError(f"Cache purge failed: {result.get('errors')}")
         plural = "es" if len(batch) > 1 else ""
         print(f"Purged {len(batch)} prefix{plural} from cache")
-
-
-def write_csv_parquet(filepath, df=None):
-    """Write dataframe to both CSV and Parquet formats.
-
-    Args:
-        filepath (str): Base path for the output files
-        df (pd.DataFrame): DataFrame to write
-    """
-    df.to_csv(f"{filepath}.csv", index=False)
-    df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
-    print(f"Wrote CSV + Parquet: {filepath}")
-
-
-def write_parquet(filepath, df=None):
-    """Write dataframe to Parquet format.
-
-    Args:
-        filepath (str): Base path for the output file
-        df (pd.DataFrame): DataFrame to write
-    """
-    df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
-    print(f"Wrote Parquet: {filepath}")
-
-
-def write_csv(filepath, df=None):
-    """Write dataframe to CSV format.
-
-    Args:
-        filepath (str): Base path for the output file
-        df (pd.DataFrame): DataFrame to write
-    """
-    df.to_csv(f"{filepath}.csv", index=False)
-    print(f"Wrote CSV: {filepath}")
 
 
 def generate_slug(x):
