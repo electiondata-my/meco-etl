@@ -1,17 +1,20 @@
 """
 Module: api_catalogue_maps.py
 
-Generates catalogue JSON files for map delimitation datasets by combining
-templates with real file sizes, row counts, and sample data.
+Generates catalogue JSON files for map delimitation and subdivision datasets by
+combining templates with real file sizes, row counts, and sample data.
 
 Inputs:
 - template-catalogue/unit-yyyy-parlimen.json
 - template-catalogue/unit-yyyy-dun.json
+- template-catalogue/unit-yyyy-dm.json
 - PATH_MAPS_DELIMS/*.parquet (geoparquet delimitation files)
 - PATH_MAPS/ (all format variants: geojson, topojson, geoparquet, fgb, kml)
+- PATH_MAPS_SUBDIVISIONS/*.parquet (geoparquet subdivision files, all formats flat)
 
 Outputs:
 - api.electiondata.my/catalogue/maps/delimitations/{region}_{year}_{type}.json
+- api.electiondata.my/catalogue/maps/subdivisions/{region}_{year}_dm.json
 """
 
 import os
@@ -27,6 +30,7 @@ load_dotenv()
 
 PATH_MAPS = Path(os.getenv("PATH_MAPS"))
 PATH_MAPS_DELIMS = Path(os.getenv("PATH_MAPS_DELIMS"))
+PATH_MAPS_SUBDIVISIONS = Path(os.getenv("PATH_MAPS_SUBDIVISIONS"))
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
 TEMPLATE_DIR = Path("template-catalogue")
 TODAY = date.today().isoformat()
@@ -133,6 +137,60 @@ def make_delims_dun():
         print(f"Written: {out_path}")
 
 
+SUBDIVISION_EXTS = {
+    "geojson": ".geojson",
+    "topojson": ".topojson",
+    "geoparquet": ".parquet",
+    "flatgeobuf": ".fgb",
+    "kml": ".kml",
+}
+
+
+def make_subdivisions_dm():
+    """Generate catalogue JSONs for all DM subdivision files."""
+    template = json.loads((TEMPLATE_DIR / "unit-yyyy-dm.json").read_text())
+    out_dir = Path(PATH_LOCAL_INTERNAL) / "catalogue" / "maps"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for fp in sorted(g(str(PATH_MAPS_SUBDIVISIONS / "*_dm.parquet"))):
+        stem = Path(fp).stem
+        region, year = stem.split("_")[:2]
+
+        gdf = gpd.read_parquet(fp)
+        n_objects = len(gdf)
+        data_cols = [c for c in gdf.columns if c != "geometry"]
+        n_attributes = len(data_cols)
+        sample_rows = gdf[data_cols].to_dict(orient="records")
+
+        cat_str = json.dumps(template)
+        cat_str = cat_str.replace("YYYY", str(year))
+        cat_str = cat_str.replace("UNIT", REGION_DISPLAY[region])
+        cat = json.loads(cat_str)
+
+        cat["data_as_of"] = str(year)
+
+        base_url = f"https://lake.electiondata.my/maps/subdivisions/{stem}"
+        for fmt, ext in SUBDIVISION_EXTS.items():
+            cat["download"][fmt]["link"] = f"{base_url}{ext}"
+            cat["download"][fmt]["n_objects"] = n_objects
+            cat["download"][fmt]["n_attributes"] = n_attributes
+            size_path = PATH_MAPS_SUBDIVISIONS / f"{stem}{ext}"
+            if size_path.exists():
+                cat["download"][fmt]["size_bytes"] = size_path.stat().st_size
+
+        map_opts = cat["display_options"]["map"]
+        map_opts["mapbox_key"] = stem
+        map_opts["zoom"] = REGION_MAP_DISPLAY[region]["zoom"]
+        map_opts["center"] = REGION_MAP_DISPLAY[region]["center"]
+
+        cat["sample_data"] = sample_rows
+
+        out_path = out_dir / f"{region}-{year}-dm.json"
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(cat, f, ensure_ascii=False)
+        print(f"Written: {out_path}")
+
+
 def upload_catalogue_maps(client, bucket, file_pattern="catalogue/maps/*"):
     """Upload catalogue map JSONs to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
@@ -159,6 +217,7 @@ if __name__ == "__main__":
 
     make_delims_parlimen()
     make_delims_dun()
+    make_subdivisions_dm()
     upload_catalogue_maps(CLIENT, BUCKET)
     purge_catalogue_maps_cache()
 

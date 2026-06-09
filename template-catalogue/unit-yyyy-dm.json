@@ -1,0 +1,120 @@
+{
+    "catalogue_type": "MAP",
+    "title": "YYYY Subdivision of UNIT (Voting Districts)",
+    "data_as_of": "YYYY",
+    "last_updated": "2026-06-01",
+    "next_update": "—",
+    "download": {
+        "geojson": {
+            "link": "https://lake.electiondata.my/maps/subdivisions/peninsular_YYYY_dm.geojson",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1921502
+        },
+        "topojson": {
+            "link": "https://lake.electiondata.my/maps/subdivisions/peninsular_YYYY_dm.topojson",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1294338
+        },
+        "geoparquet": {
+            "link": "https://lake.electiondata.my/maps/subdivisions/peninsular_YYYY_dm.parquet",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 897166
+        },
+        "flatgeobuf": {
+            "link": "https://lake.electiondata.my/maps/subdivisions/peninsular_YYYY_dm.fgb",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 1213752
+        },
+        "kml": {
+            "link": "https://lake.electiondata.my/maps/subdivisions/peninsular_YYYY_dm.kml",
+            "n_objects": 165,
+            "n_attributes": 10,
+            "size_bytes": 2976247
+        }
+    },
+    "description": "Boundaries of voting districts in UNIT following the YYYY delimitation and accompanying subdivision exercise.",
+    "methodology": "A detailed accounting of the methodology will be provided by Thevananthan et. al in mid-July 2026. However, the compilaton and validation process is essentially identical to that documented in [Thevananthan and Chacko (2025)](https://arxiv.org/abs/2512.24211); the work on DMs is an extension of the prior work on Parliament and DUN constituencies.",
+    "fields": [
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] State in which the parliamentary constituency is located, e.g. 'Perlis'"
+        },
+        {
+            "name": "parlimen",
+            "title": "Parliament",
+            "description": "[String] Code (P.xxx) and name of the parliamentary constituency, e.g. 'P.001 Padang Besar'"
+        },
+        {
+            "name": "code_parlimen",
+            "title": "Parliament Code",
+            "description": "[String] Official code of the parliamentary constituency, e.g. 'P.001'"
+        },
+        {
+            "name": "dun",
+            "title": "DUN",
+            "description": "[String] Code (N.xx) and name of the DUN constituency, e.g. 'N.01 Titi Tinggi'"
+        },
+        {
+            "name": "code_dm",
+            "title": "DUN Code",
+            "description": "[String] Official code of the DUN constituency, e.g. 'N.01'"
+        },
+        {
+            "name": "dm",
+            "title": "Voting District",
+            "description": "[String] Code (xxx/yy/zz) and name of the Voting District, e.g. '001/01/01 Jalan Padang Besar'"
+        },
+        {
+            "name": "code_dm",
+            "title": "Voting District Code",
+            "description": "[String] Official code of the Voting District, e.g. '001/01/01'"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan and Chacko (2025), which documents the digitisation and validation of the boundary data. The citation will be updated in mid-July when a new preprint is published.",
+        "type": "article",
+        "id": "thevananthan2025malaysian",
+        "title": "The Malaysian Election Corpus (MECo): Electoral Maps and Cartograms from 1954 to 2025",
+        "author": "Thevananthan, Thevesh and Chacko, Danesh Prakash",
+        "journal": "arXiv preprint arXiv:2512.24211",
+        "year": "2025"
+    },
+    "display_options": {
+        "map": {
+            "mapbox_key": "peninsular_YYYY_dm",
+            "zoom": {
+                "desktop": 5,
+                "mobile": 5
+            },
+            "center": {
+                "desktop": [
+                    102.5,
+                    3.8
+                ],
+                "mobile": [
+                    102.5,
+                    3.8
+                ]
+            },
+            "fill_colour": "#e8263a",
+            "fill_opacity": 0.1,
+            "stroke_colour": "#e8263a",
+            "stroke_opacity": 1,
+            "stroke_width": 1.5
+        }
+    },
+    "sample_data": [
+        {
+            "state": "Perlis",
+            "parlimen": "P.001 Padang Besar",
+            "code_parlimen": "P.001",
+            "dun": "N.01 Titi Tinggi",
+            "code_dm": "N.01"
+        }
+    ]
+}
