@@ -41,7 +41,7 @@ REGION_DISPLAY = {
     "sarawak": "Sarawak",
 }
 
-REGION_MAP_DISPLAY = {
+REGION_MAP_DISPLAY_DELIMS = {
     "peninsular": {
         "zoom": {"desktop": 5.8, "mobile": 5.8},
         "center": {"desktop": [102.9, 4.1], "mobile": [102.0, 4.13]},
@@ -56,7 +56,22 @@ REGION_MAP_DISPLAY = {
     },
 }
 
-FORMAT_EXTS = {
+REGION_MAP_DISPLAY_SUBDIVS = {
+    "peninsular": {
+        "zoom": {"desktop": 8.32, "mobile": 8.32},
+        "center": {"desktop": [101.433, 5.756], "mobile": [101.433, 5.756]},
+    },
+    "sabah": {
+        "zoom": {"desktop": 8.54, "mobile": 8.54},
+        "center": {"desktop": [116.963, 6.524], "mobile": [116.963, 6.524]},
+    },
+    "sarawak": {
+        "zoom": {"desktop": 8.60, "mobile": 8.60},
+        "center": {"desktop": [114.558, 4.157], "mobile": [114.558, 4.157]},
+    },
+}
+
+FORMAT_EXTS_DELIMS = {
     "geojson": (".geojson", "geojson/delimitations"),
     "topojson": (".topojson", "topojson/delimitations"),
     "geoparquet": (".parquet", "geoparquet/delimitations"),
@@ -64,9 +79,17 @@ FORMAT_EXTS = {
     "kml": (".kml", "kml/delimitations"),
 }
 
+FORMAT_EXTS_SUBDIVS = {
+    "geojson": ".geojson",
+    "topojson": ".topojson",
+    "geoparquet": ".parquet",
+    "flatgeobuf": ".fgb",
+    "kml": ".kml",
+}
+
 
 def _get_file_size(stem, fmt):
-    ext, subdir = FORMAT_EXTS[fmt]
+    ext, subdir = FORMAT_EXTS_DELIMS[fmt]
     fp = PATH_MAPS / subdir / (stem + ext)
     return fp.stat().st_size if fp.exists() else None
 
@@ -87,7 +110,7 @@ def _build_catalogue(template, stem, region, year):
     cat["data_as_of"] = str(year)
 
     base_url = f"https://lake.electiondata.my/maps/delimitations/{stem}"
-    for fmt, (ext, _) in FORMAT_EXTS.items():
+    for fmt, (ext, _) in FORMAT_EXTS_DELIMS.items():
         cat["download"][fmt]["link"] = f"{base_url}{ext}"
         cat["download"][fmt]["n_objects"] = n_objects
         cat["download"][fmt]["n_attributes"] = n_attributes
@@ -97,8 +120,8 @@ def _build_catalogue(template, stem, region, year):
 
     map_opts = cat["display_options"]["map"]
     map_opts["mapbox_key"] = stem
-    map_opts["zoom"] = REGION_MAP_DISPLAY[region]["zoom"]
-    map_opts["center"] = REGION_MAP_DISPLAY[region]["center"]
+    map_opts["zoom"] = REGION_MAP_DISPLAY_DELIMS[region]["zoom"]
+    map_opts["center"] = REGION_MAP_DISPLAY_DELIMS[region]["center"]
 
     cat["sample_data"] = sample_rows
 
@@ -137,15 +160,6 @@ def make_delims_dun():
         print(f"Written: {out_path}")
 
 
-SUBDIVISION_EXTS = {
-    "geojson": ".geojson",
-    "topojson": ".topojson",
-    "geoparquet": ".parquet",
-    "flatgeobuf": ".fgb",
-    "kml": ".kml",
-}
-
-
 def make_subdivisions_dm():
     """Generate catalogue JSONs for all DM subdivision files."""
     template = json.loads((TEMPLATE_DIR / "unit-yyyy-dm.json").read_text())
@@ -170,7 +184,7 @@ def make_subdivisions_dm():
         cat["data_as_of"] = str(year)
 
         base_url = f"https://lake.electiondata.my/maps/subdivisions/{stem}"
-        for fmt, ext in SUBDIVISION_EXTS.items():
+        for fmt, ext in FORMAT_EXTS_SUBDIVS.items():
             cat["download"][fmt]["link"] = f"{base_url}{ext}"
             cat["download"][fmt]["n_objects"] = n_objects
             cat["download"][fmt]["n_attributes"] = n_attributes
@@ -180,8 +194,8 @@ def make_subdivisions_dm():
 
         map_opts = cat["display_options"]["map"]
         map_opts["mapbox_key"] = stem
-        map_opts["zoom"] = REGION_MAP_DISPLAY[region]["zoom"]
-        map_opts["center"] = REGION_MAP_DISPLAY[region]["center"]
+        map_opts["zoom"] = REGION_MAP_DISPLAY_SUBDIVS[region]["zoom"]
+        map_opts["center"] = REGION_MAP_DISPLAY_SUBDIVS[region]["center"]
 
         cat["sample_data"] = sample_rows
 
