@@ -77,7 +77,9 @@ def _build_catalogue(template, entry):
 
 def make_results_headline():
     """Generate catalogue JSONs for all Constituency-Level results_headline entries."""
-    index = json.loads(Path(f"{PATH_LOCAL_INTERNAL}catalogue/index.json").read_text())
+    index = json.loads(
+        Path(f"{PATH_LOCAL_INTERNAL}catalogue/index.json").read_text(encoding="utf-8")
+    )
     entries = index["data"]["Results"]["Constituency-Level"]
 
     templates = {
