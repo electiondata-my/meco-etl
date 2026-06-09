@@ -79,8 +79,9 @@
         "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan (2026). The citation will be updated in mid-July when a new preprint is published.",
         "type": "misc",
         "id": "electiondatamy2026",
-        "title": "ElectionData.MY: Subdivision of Voting Districts",
+        "title": "Map of the Subdivision of Voting Districts",
         "author": "Thevananthan, Thevesh",
+        "journal": "ElectionData.MY",
         "year": "2026"
     },
     "display_options": {

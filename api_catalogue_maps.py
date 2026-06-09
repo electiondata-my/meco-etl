@@ -58,33 +58,27 @@ REGION_MAP_DISPLAY_DELIMS = {
 
 REGION_MAP_DISPLAY_SUBDIVS = {
     "peninsular": {
-        "zoom": {"desktop": 8.32, "mobile": 8.32},
-        "center": {"desktop": [101.433, 5.756], "mobile": [101.433, 5.756]},
+        "zoom": {"desktop": 5.8, "mobile": 5.8},  # 8.32, 8.32
+        "center": {
+            "desktop": [102.9, 4.1],  # 101.433, 5.756
+            "mobile": [102.0, 4.13],  # 101.433, 5.756
+        },
     },
     "sabah": {
-        "zoom": {"desktop": 8.54, "mobile": 8.54},
-        "center": {"desktop": [116.963, 6.524], "mobile": [116.963, 6.524]},
+        "zoom": {"desktop": 6.5, "mobile": 6},  # 8.54, 8.54
+        "center": {
+            "desktop": [117.354, 5.754],  # 116.963, 6.524
+            "mobile": [117.29, 5.80],  # 116.963, 6.524
+        },
     },
     "sarawak": {
-        "zoom": {"desktop": 8.60, "mobile": 8.60},
-        "center": {"desktop": [114.558, 4.157], "mobile": [114.558, 4.157]},
+        "zoom": {"desktop": 6.25, "mobile": 5.35},  # 8.60, 8.60
+        "center": {
+            "desktop": [113.303, 2.913],  # 114.558, 4.157
+            "mobile": [112.7, 3.53],  # 114.558, 4.157
+        },
     },
 }
-
-# REGION_MAP_DISPLAY_SUBDIVS = {
-#     "peninsular": {
-#         "zoom": {"desktop": 5.8, "mobile": 5.8},
-#         "center": {"desktop": [102.9, 4.1], "mobile": [102.0, 4.13]},
-#     },
-#     "sabah": {
-#         "zoom": {"desktop": 6.5, "mobile": 6},
-#         "center": {"desktop": [117.354, 5.754], "mobile": [117.29, 5.80]},
-#     },
-#     "sarawak": {
-#         "zoom": {"desktop": 6.25, "mobile": 5.35},
-#         "center": {"desktop": [113.303, 2.913], "mobile": [112.7, 3.53]},
-#     },
-# }
 
 FORMAT_EXTS_DELIMS = {
     "geojson": (".geojson", "geojson/delimitations"),
