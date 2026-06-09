@@ -1,0 +1,152 @@
+{
+    "catalogue_type": "TABLE",
+    "title": "TITLE",
+    "data_as_of": "yyyy-mm-dd",
+    "last_updated": "2025-12-30",
+    "next_update": "—",
+    "download": {
+        "parquet": {
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.parquet",
+            "n_rows": 945,
+            "n_cols": 20,
+            "size_bytes": 61030
+        },
+        "csv": {
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.csv",
+            "n_rows": 945,
+            "n_cols": 20,
+            "size_bytes": 153768
+        },
+        "excel": {
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.xlsx",
+            "n_rows": 945,
+            "n_cols": 20,
+            "size_bytes": 153768
+        }
+    },
+    "description": "DESCRIPTION.",
+    "methodology": "This dataset was compiled from official Parliament and DUN-level results published by the Election Commission of Malaysia (EC). The foundational data was extracted from Form 16 of the electoral returns, which are formally gazetted and published as subsidiary legislation. Although these records are available in digital form for modern elections (albeit just via a website rather than as machine-readable data), older election results were only available as unformatted PDF files or physical paper reports, thus requiring manual transcription. The resulting database covers all federal and state general elections since the first general election in 1955, as well as all by-elections since the first in 1957.\n\nA major challenge in tracking Malaysian electoral history is that politicians frequently change their names on the ballot, use different nicknames, or switch parties. To fix this, a unique ID system was built into this dataset. Every individual candidate, political party, and coalition was assigned a stable idenfitier, thus allowing a candidate's career to be tracked across decades, and electoral dynamics to be studied at both the coalition and component party level.\n\nFor full technical details on how this dataset was built and validated, please refer to the peer-reviewed paper by [Thevananthan (2025)](https://www.nature.com/articles/s41597-025-06502-7).",
+    "fields": [
+        {
+            "name": "date",
+            "title": "Date",
+            "description": "[Date] Date of polling day in YYYY-MM-DD format"
+        },
+        {
+            "name": "election",
+            "title": "Election",
+            "description": "[String] Election identifier, e.g. GE-15, SE-15, By-Election"
+        },
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] Name of state where the contest took place"
+        },
+        {
+            "name": "seat",
+            "title": "Constituency",
+            "description": "[String] Code (P.xxX or N.xxX) and name of the constituency"
+        },
+        {
+            "name": "ballot_order",
+            "title": "Ballot Order",
+            "description": "[Integer] The candidate's position on the ballot paper"
+        },
+        {
+            "name": "candidate_uid",
+            "title": "Candidate UID",
+            "description": "[String] Unique identifier for the candidate"
+        },
+        {
+            "name": "name_on_ballot",
+            "title": "Name On Ballot",
+            "description": "[String] Candidate's name as it appeared on the ballot paper"
+        },
+        {
+            "name": "name",
+            "title": "Candidate Name",
+            "description": "[String] Candidate's harmonised name"
+        },
+        {
+            "name": "sex",
+            "title": "Sex",
+            "description": "[String] Sex of candidate; 'M' for male, 'F' for female"
+        },
+        {
+            "name": "ethnicity",
+            "title": "Ethnicity",
+            "description": "[String] Ethnicity of candidate (e.g. 'Malay', 'Chinese', etc.)"
+        },
+        {
+            "name": "age",
+            "title": "Age",
+            "description": "[Integer] Age of candidate in years at time of election (-1 if missing)"
+        },
+        {
+            "name": "party_on_ballot",
+            "title": "Party On Ballot",
+            "description": "[String] Short/abbreviated party name as it appeared on the ballot paper"
+        },
+        {
+            "name": "party_uid",
+            "title": "Party UID",
+            "description": "[String] Unique party identifier (code)"
+        },
+        {
+            "name": "party",
+            "title": "Party",
+            "description": "[String] Full official party name"
+        },
+        {
+            "name": "coalition_uid",
+            "title": "Coalition UID",
+            "description": "[Integer] Numeric identifier for the coalition (if any). 0 if no coalition"
+        },
+        {
+            "name": "coalition",
+            "title": "Coalition",
+            "description": "[String] Coalition name or 'ALONE' if not in a coalition"
+        },
+        {
+            "name": "votes",
+            "title": "Votes",
+            "description": "[Integer] Number of votes received by the candidate"
+        },
+        {
+            "name": "votes_perc",
+            "title": "Vote Percentage",
+            "description": "[Float] Percentage of valid votes received by the candidate"
+        },
+        {
+            "name": "rank",
+            "title": "Rank",
+            "description": "[Integer] Placing/rank of candidate in contest (1 = winner, 2 = second place, and so on)"
+        },
+        {
+            "name": "result",
+            "title": "Result",
+            "description": "[String] Short outcome: 'won', 'won_uncontested', 'lost', or 'lost_deposit'"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should cite Thevananthan (2025), which documents the construction of the dataset as well as the data itself.",
+        "type": "article",
+        "id": "thevananthan2025malaysian",
+        "title": "The Malaysian Election Corpus (MECo): Federal and State-Level Election Results from 1955 to 2025",
+        "author": "Thevananthan, Thevesh",
+        "journal": "Scientific Data",
+        "date": "2025-12-30",
+        "publisher": "Nature Publishing Group UK London"
+    },
+    "display_options": {
+        "precision": {
+            "default": 0,
+            "specific": {
+                "votes_perc": 1
+            },
+            "filter_columns": [],
+            "freeze_columns": []
+        }
+    },
+    "sample_data": []
+}

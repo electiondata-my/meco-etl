@@ -1,0 +1,130 @@
+{
+    "catalogue_type": "TABLE",
+    "title": "TITLE",
+    "data_as_of": "yyyy-mm-dd",
+    "last_updated": "2025-12-30",
+    "next_update": "—",
+    "download": {
+        "parquet": {
+            "link": "https://lake.electiondata.my/results_headline/headline_stats.parquet",
+            "n_rows": 222,
+            "n_cols": 15,
+            "size_bytes": 24634
+        },
+        "csv": {
+            "link": "https://lake.electiondata.my/results_headline/headline_stats.csv",
+            "n_rows": 222,
+            "n_cols": 15,
+            "size_bytes": 33497
+        },
+        "excel": {
+            "link": "https://lake.electiondata.my/results_headline/headline_stats.xlsx",
+            "n_rows": 222,
+            "n_cols": 15,
+            "size_bytes": 33497
+        }
+    },
+    "description": "DESCRIPTION.",
+    "methodology": "This data was compiled from the official results (Form 16 of the electoral returns) gazetted as subsidiary legislation by the Election Commission of Malaysia. The gazetted results are available only in PDF format—the data shown here was scraped, standardised, and validated for publication on ElectionData.MY, as documented in [Thevananthan (2025)](https://www.nature.com/articles/s41597-025-06502-7).",
+    "fields": [
+        {
+            "name": "date",
+            "title": "Date",
+            "description": "[Date] Date of polling day in YYYY-MM-DD format"
+        },
+        {
+            "name": "election",
+            "title": "Election",
+            "description": "[String] Election identifier, GE-15 in this case"
+        },
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] Name of state where the contest took place"
+        },
+        {
+            "name": "seat",
+            "title": "Constituency",
+            "description": "[String] Code (P.xxX) and name of the parliamentary seat"
+        },
+        {
+            "name": "voters_total",
+            "title": "Electorate Size",
+            "description": "[Integer] Total number of registered voters in the constituency"
+        },
+        {
+            "name": "ballots_issued",
+            "title": "Ballots Issued",
+            "description": "[Integer] Total number of ballots issued to voters"
+        },
+        {
+            "name": "ballots_not_returned",
+            "title": "Ballots Not Returned",
+            "description": "[Integer] Number of ballots issued but not returned (e.g. postal votes not received)"
+        },
+        {
+            "name": "votes_rejected",
+            "title": "Votes Rejected",
+            "description": "[Integer] Number of spoilt or rejected ballots"
+        },
+        {
+            "name": "votes_valid",
+            "title": "Votes Valid",
+            "description": "[Integer] Number of valid votes cast"
+        },
+        {
+            "name": "majority",
+            "title": "Majority",
+            "description": "[Integer] Winning margin in votes (difference between 1st and 2nd place). 0 if uncontested"
+        },
+        {
+            "name": "n_candidates",
+            "title": "Number of Candidates",
+            "description": "[Integer] Number of candidates contesting the seat"
+        },
+        {
+            "name": "voter_turnout",
+            "title": "Voter Turnout (%)",
+            "description": "[Float] Ballots issued as a percentage of total registered voters. Null if uncontested"
+        },
+        {
+            "name": "majority_perc",
+            "title": "Majority (%)",
+            "description": "[Float] Winning majority as a percentage of valid votes. Null if uncontested"
+        },
+        {
+            "name": "votes_rejected_perc",
+            "title": "Rejected Votes (%)",
+            "description": "[Float] Rejected votes as a percentage of ballots issued. Null if uncontested"
+        },
+        {
+            "name": "ballots_not_returned_perc",
+            "title": "Ballots Not Returned (%)",
+            "description": "[Float] Unreturned ballots as a percentage of ballots issued. Null if uncontested"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should cite Thevananthan (2025), which documents the construction of the dataset as well as the data itself.",
+        "type": "article",
+        "id": "thevananthan2025malaysian",
+        "title": "The Malaysian Election Corpus (MECo): Federal and State-Level Election Results from 1955 to 2025",
+        "author": "Thevananthan, Thevesh",
+        "journal": "Scientific Data",
+        "date": "2025-12-30",
+        "publisher": "Nature Publishing Group UK London"
+    },
+    "display_options": {
+        "precision": {
+            "default": 0,
+            "specific": {
+                "voter_turnout": 1,
+                "majority_perc": 1,
+                "votes_rejected_perc": 1,
+                "ballots_not_returned_perc": 1
+            },
+            "filter_columns": [],
+            "freeze_columns": []
+        }
+    },
+    "sample_data": []
+}
