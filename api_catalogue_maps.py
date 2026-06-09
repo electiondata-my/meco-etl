@@ -71,6 +71,21 @@ REGION_MAP_DISPLAY_SUBDIVS = {
     },
 }
 
+# REGION_MAP_DISPLAY_SUBDIVS = {
+#     "peninsular": {
+#         "zoom": {"desktop": 5.8, "mobile": 5.8},
+#         "center": {"desktop": [102.9, 4.1], "mobile": [102.0, 4.13]},
+#     },
+#     "sabah": {
+#         "zoom": {"desktop": 6.5, "mobile": 6},
+#         "center": {"desktop": [117.354, 5.754], "mobile": [117.29, 5.80]},
+#     },
+#     "sarawak": {
+#         "zoom": {"desktop": 6.25, "mobile": 5.35},
+#         "center": {"desktop": [113.303, 2.913], "mobile": [112.7, 3.53]},
+#     },
+# }
+
 FORMAT_EXTS_DELIMS = {
     "geojson": (".geojson", "geojson/delimitations"),
     "topojson": (".topojson", "topojson/delimitations"),
