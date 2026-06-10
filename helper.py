@@ -696,7 +696,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
     counts AS (
         SELECT
             state, seat, ethnicity,
-            COUNT(*)                                        AS overall,
+            COUNT(*)                                        AS "all-ages",
             COUNT(*) FILTER (WHERE age BETWEEN 18 AND 29)  AS "18-29",
             COUNT(*) FILTER (WHERE age BETWEEN 30 AND 39)  AS "30-39",
             COUNT(*) FILTER (WHERE age BETWEEN 40 AND 49)  AS "40-49",
@@ -711,7 +711,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
     ethnic_rows AS (
         SELECT
             g.state, g.seat, g.ethnicity,
-            COALESCE(c.overall, 0) AS overall,
+            COALESCE(c."all-ages", 0) AS "all-ages",
             COALESCE(c."18-29",  0) AS "18-29",
             COALESCE(c."30-39",  0) AS "30-39",
             COALESCE(c."40-49",  0) AS "40-49",
@@ -724,8 +724,8 @@ def get_age_x_ethnicity_from_vr(vr=None):
     ),
     overall_rows AS (
         SELECT
-            state, seat, 'Overall' AS ethnicity,
-            SUM(overall) AS overall,
+            state, seat, 'all-ethnicities' AS ethnicity,
+            SUM("all-ages") AS "all-ages",
             SUM("18-29")  AS "18-29",
             SUM("30-39")  AS "30-39",
             SUM("40-49")  AS "40-49",
@@ -741,7 +741,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
         UNION ALL
         SELECT * FROM ethnic_rows
     ) t
-    ORDER BY seat, CASE WHEN ethnicity = 'Overall' THEN 0 ELSE 1 END, overall DESC
+    ORDER BY seat, CASE WHEN ethnicity = 'all-ethnicities' THEN 0 ELSE 1 END, "all-ages" DESC
     """
     df = duckdb.query(query).fetchdf()
     for c in df.columns[3:]:
