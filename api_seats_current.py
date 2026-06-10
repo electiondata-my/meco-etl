@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 
 from helper import (
     generate_slug,
+    get_voter_pyramid_from_vr,
+    get_age_x_ethnicity_from_vr,
     get_center_and_zoom,
     get_r2_client,
     upload_bulk,
@@ -19,6 +21,7 @@ from helper import (
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_MAPS_DELIMS = os.getenv("PATH_MAPS_DELIMS")
+PATH_VR = os.getenv("PATH_VR")
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
 
 
@@ -215,6 +218,10 @@ def make_seats():
         for slug, records in mf.items()
     }
 
+    # ----- demographic data -----
+    pyramid = get_voter_pyramid_from_vr(f"{PATH_VR}ge15_2022.parquet")
+    heatmap = get_age_x_ethnicity_from_vr(f"{PATH_VR}ge15_2022.parquet")
+
     # ----- stitch everything together into a single JSON object -----
 
     all_data = {}
@@ -233,13 +240,29 @@ def make_seats():
         ]  # proper JSON null
 
         # get lineage descriptions, combine, and sort by date to insert lineage at the right spot (before or after the election)
-        tfl = lf[lf.slug == slug].copy().drop("slug", axis=1)
+        tfl = lf[lf.slug == slug].copy().drop(columns=["slug"])
         tfl = tfl.to_dict(orient="records")
         tfl = [
             {k: (None if pd.isna(v) else v) for k, v in record.items()} for record in tfl
         ]  # proper JSON null
         results = tf + tfl
         results.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+        # demographic data
+        tfp = (
+            pyramid[pyramid.slug == slug]
+            .copy()
+            .drop(columns=["slug"])
+            .pivot(index="age", columns="sex", values="voters")
+            .reset_index()
+        )
+        tfh = (
+            heatmap[heatmap.slug == slug]
+            .copy()
+            .drop(columns=["slug"])
+            .set_index("ethnicity")
+            .transpose()
+        )
 
         all_data[slug] = {
             "map_plot": {
@@ -249,6 +272,15 @@ def make_seats():
             },
             "map_lineage": mf[slug],
             "results": results,
+            "pyramid": {
+                "ages": tfp["age"].tolist(),
+                "male": tfp["Male"].tolist(),
+                "female": tfp["Female"].tolist(),
+            },
+            "heatmap": {
+                "ages": tfh.index.tolist(),
+                **{col: tfh[col].tolist() for col in tfh.columns},
+            },
         }
 
     with open(f"{PATH_LOCAL_INTERNAL}seats/current/all.json", "w", encoding="utf-8") as f:

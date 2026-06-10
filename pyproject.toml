@@ -16,4 +16,5 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "openpyxl>=3.1.2",
     "requests>=2.34.2",
+    "ipywidgets>=8.1.8",
 ]

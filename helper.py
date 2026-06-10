@@ -12,6 +12,7 @@ from math import log2
 import requests
 import geopandas as gpd
 import pandas as pd
+import duckdb
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -559,3 +560,195 @@ def get_center_and_zoom(files=[]):
         gf = gf[[seat_type, "state", "center", "zoom"]].rename(columns={seat_type: "seat"})
         res = gf.copy() if len(res) == 0 else pd.concat([res, gf], axis=0, ignore_index=True)
     return res
+
+
+def get_voter_pyramid_from_vr(vr=None):
+    """
+    Generate a voter age-sex pyramid dataset from a voter registry Parquet file.
+
+    Args:
+        vr (str, optional): Path to the voter registry Parquet file.
+
+    Returns:
+        pandas.DataFrame: DataFrame with columns:
+            - 'slug': unique identifier for each seat-state combination,
+            - 'sex': gender of voters,
+            - 'age': age of voters (18 to 100),
+            - 'voters': number of voters for each age, sex, and seat.
+
+    The function reads the Parquet file, computes per seat, sex, and single-year age group
+    the total voter counts, normalizing state + seat as a slug.
+    """
+    query = f"""
+    WITH base AS (
+        SELECT state, parlimen AS seat, sex, LEAST(2022 - birth_year, 100) AS age
+        FROM read_parquet('{vr}')
+        UNION ALL
+        SELECT state, dun AS seat, sex, LEAST(2022 - birth_year, 100) AS age
+        FROM read_parquet('{vr}')
+        WHERE NOT state LIKE 'W.P.%'
+    ),
+    counts AS (
+        SELECT state, seat, sex, age, COUNT(*) AS voters
+        FROM base
+        WHERE age >= 18
+        GROUP BY state, seat, sex, age
+    ),
+    seats AS (
+        SELECT DISTINCT state, parlimen AS seat FROM read_parquet('{vr}')
+        UNION ALL
+        SELECT DISTINCT state, dun AS seat FROM read_parquet('{vr}')
+        WHERE NOT state LIKE 'W.P.%'
+    ),
+    ages AS (
+        SELECT unnest(generate_series(18, 100)) AS age
+    ),
+    sexes AS (
+        SELECT DISTINCT sex FROM read_parquet('{vr}')
+    ),
+    grid AS (
+        SELECT s.state, s.seat, sx.sex, a.age
+        FROM seats s
+        CROSS JOIN sexes sx
+        CROSS JOIN ages a
+    )
+    SELECT
+        g.state,
+        g.seat,
+        g.sex,
+        g.age::INTEGER AS age,
+        COALESCE(c.voters, 0) AS voters
+    FROM grid g
+    LEFT JOIN counts c USING (state, seat, sex, age)
+    ORDER BY g.seat, g.sex, g.age
+    """
+
+    df = duckdb.query(query).fetchdf()
+    df.seat = df.seat + ", " + df.state
+    df = df.rename(columns={"seat": "slug"})
+    df = df.drop(columns=["state"])
+    df.slug = df.slug.apply(generate_slug)
+    return df
+
+
+def get_age_x_ethnicity_from_vr(vr=None):
+    """
+    Returns a DataFrame aggregating counts of voters by age and ethnicity for each seat and state
+    from the given voter registry parquet file.
+
+    It:
+    - Normalizes certain Sabah and Sarawak ethnic groups for aggregation.
+    - Counts registered voters per (state, seat, ethnicity, age band).
+    - Provides cross-joined enumeration of all observed state-ethnicity-seat trios.
+    - Only includes voters aged 18 and above.
+
+    Inputs:
+    - vr: Path to .parquet file containing voter registry data.
+
+    Outputs:
+    - DataFrame with voting age population counts grouped by state, seat, ethnicity, and age band.
+    """
+    query = f"""
+    WITH base AS (
+        SELECT
+            state,
+            parlimen AS seat,
+            CASE
+                WHEN state = 'Sabah'   AND ethnicity IN ('Kadazan', 'Dusun')          THEN 'Kadazan-Dusun'
+                WHEN state = 'Sabah'   AND ethnicity IN ('Bumi Sarawak', 'Indian')    THEN 'Other'
+                WHEN state = 'Sarawak' AND ethnicity IN ('Malay', 'Melanau')          THEN 'Malay-Melanau'
+                WHEN state = 'Sarawak' AND ethnicity IN ('Bumi Sabah', 'Indian')      THEN 'Other'
+                ELSE ethnicity
+            END AS ethnicity,
+            LEAST(2022 - birth_year, 100) AS age
+        FROM read_parquet('{vr}')
+        UNION ALL
+        SELECT
+            state,
+            dun AS seat,
+            CASE
+                WHEN state = 'Sabah'   AND ethnicity IN ('Kadazan', 'Dusun')          THEN 'Kadazan-Dusun'
+                WHEN state = 'Sabah'   AND ethnicity IN ('Bumi Sarawak', 'Indian')    THEN 'Other'
+                WHEN state = 'Sarawak' AND ethnicity IN ('Malay', 'Melanau')          THEN 'Malay-Melanau'
+                WHEN state = 'Sarawak' AND ethnicity IN ('Bumi Sabah', 'Indian')      THEN 'Other'
+                ELSE ethnicity
+            END AS ethnicity,
+            LEAST(2022 - birth_year, 100) AS age
+        FROM read_parquet('{vr}')
+        WHERE NOT state LIKE 'W.P.%'
+    ),
+    state_ethnicities AS (
+        SELECT DISTINCT state, ethnicity
+        FROM base
+        WHERE age >= 18
+    ),
+    seats AS (
+        SELECT DISTINCT state, parlimen AS seat FROM read_parquet('{vr}')
+        UNION ALL
+        SELECT DISTINCT state, dun AS seat FROM read_parquet('{vr}')
+        WHERE NOT state LIKE 'W.P.%'
+    ),
+    grid AS (
+        SELECT s.state, s.seat, e.ethnicity
+        FROM seats s
+        JOIN state_ethnicities e ON s.state = e.state
+    ),
+    counts AS (
+        SELECT
+            state, seat, ethnicity,
+            COUNT(*)                                        AS overall,
+            COUNT(*) FILTER (WHERE age BETWEEN 18 AND 29)  AS "18-29",
+            COUNT(*) FILTER (WHERE age BETWEEN 30 AND 39)  AS "30-39",
+            COUNT(*) FILTER (WHERE age BETWEEN 40 AND 49)  AS "40-49",
+            COUNT(*) FILTER (WHERE age BETWEEN 50 AND 59)  AS "50-59",
+            COUNT(*) FILTER (WHERE age BETWEEN 60 AND 69)  AS "60-69",
+            COUNT(*) FILTER (WHERE age BETWEEN 70 AND 79)  AS "70-79",
+            COUNT(*) FILTER (WHERE age >= 80)               AS "80+"
+        FROM base
+        WHERE age >= 18
+        GROUP BY state, seat, ethnicity
+    ),
+    ethnic_rows AS (
+        SELECT
+            g.state, g.seat, g.ethnicity,
+            COALESCE(c.overall, 0) AS overall,
+            COALESCE(c."18-29",  0) AS "18-29",
+            COALESCE(c."30-39",  0) AS "30-39",
+            COALESCE(c."40-49",  0) AS "40-49",
+            COALESCE(c."50-59",  0) AS "50-59",
+            COALESCE(c."60-69",  0) AS "60-69",
+            COALESCE(c."70-79",  0) AS "70-79",
+            COALESCE(c."80+",    0) AS "80+"
+        FROM grid g
+        LEFT JOIN counts c USING (state, seat, ethnicity)
+    ),
+    overall_rows AS (
+        SELECT
+            state, seat, 'Overall' AS ethnicity,
+            SUM(overall) AS overall,
+            SUM("18-29")  AS "18-29",
+            SUM("30-39")  AS "30-39",
+            SUM("40-49")  AS "40-49",
+            SUM("50-59")  AS "50-59",
+            SUM("60-69")  AS "60-69",
+            SUM("70-79")  AS "70-79",
+            SUM("80+")    AS "80+"
+        FROM ethnic_rows
+        GROUP BY state, seat
+    )
+    SELECT * FROM (
+        SELECT * FROM overall_rows
+        UNION ALL
+        SELECT * FROM ethnic_rows
+    ) t
+    ORDER BY seat, CASE WHEN ethnicity = 'Overall' THEN 0 ELSE 1 END, overall DESC
+    """
+    df = duckdb.query(query).fetchdf()
+    for c in df.columns[3:]:
+        df[c] = df[c].astype(int)
+    df.seat = df.seat + ", " + df.state
+    df = df.rename(columns={"seat": "slug"})
+    df = df.drop(columns=["state"])
+    df.ethnicity = df.ethnicity.apply(generate_slug)
+    df.slug = df.slug.apply(generate_slug)
+    return df
