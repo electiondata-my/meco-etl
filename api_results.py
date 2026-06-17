@@ -32,11 +32,11 @@ PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
 def make_results():
     """Generate per-seat, per-date result JSON files and write them to disk."""
     print("")
-    data = {"ballot": [], "summary": []}
+    data = {"ballot": [], "stats": []}
 
     # fmt: off
     col_api_ballot = ["name", "party_uid", "party", "coalition_uid", "coalition", "votes", "votes_perc", "result"]
-    col_api_ballot_summary = ["date", "voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
+    col_api_stats = ["date", "voters_total","voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
     # fmt: on
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
@@ -53,7 +53,7 @@ def make_results():
                 .copy()[col_api_ballot]
                 .sort_values(by="votes", ascending=False)
             )
-            dfse_b = dfs[dfs.date == date].copy()[col_api_ballot_summary].drop_duplicates()
+            dfse_b = dfs[dfs.date == date].copy()[col_api_stats].drop_duplicates()
 
             res = dfse.to_dict(orient="records")
             res = [
@@ -66,7 +66,7 @@ def make_results():
             ]  # proper JSON null
 
             data["ballot"] = res
-            data["summary"] = res_b
+            data["stats"] = res_b
             with open(
                 f"{PATH_LOCAL_INTERNAL}results/{seat}/{date}.json", "w", encoding="utf-8"
             ) as f:
