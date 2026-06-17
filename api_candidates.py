@@ -1,19 +1,21 @@
 """
-Module: internal_candidates.py
+Module: api_candidates.py
 
-This module processes and uploads candidate and election results data for internal.electiondata.my.
+Processes and uploads candidate data for the public API at api.electiondata.my.
 It:
-- Reads, merges, and transforms data from headline results files
-- Prepares consolidated candidate DataFrames
-- Uploads processed outputs to R2
+- Reads and transforms candidate data from the internal parquet
+- Generates a dropdown JSON (with slug renamed to uid)
+- Generates per-candidate JSONs with seat split into seat and state
+- Uploads all outputs to the meco-api R2 bucket
 
 Inputs:
--  PATH_RESULTS_HEADLINE/consol_ballots.parquet
--  PATH_RESULTS_HEADLINE/consol_stats.parquet
+- internal.electiondata.my/candidates.parquet
+- internal.electiondata.my/candidates/dropdown.json
+- internal.electiondata.my/candidates/all.json
 
 Outputs:
-- internal.electiondata.my/candidates.parquet
-- Processed candidate-level tables uploaded to R2 in minified JSON format
+- api.electiondata.my/v1/candidates/dropdown.json uploaded to R2
+- api.electiondata.my/v1/candidates/{uid}.json uploaded to R2
 """
 
 import os
@@ -29,6 +31,7 @@ from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache_pre
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+PATH_LOCAL_API = "api.electiondata.my/v1/candidates/"
 
 
 def make_candidates_df():
@@ -168,17 +171,74 @@ def purge_candidates_cache(prefix="candidates/"):
     purge_cf_cache_prefix([full_prefix])
 
 
+def make_api_candidates_jsons():
+    """Generate candidate JSON files for the public API.
+
+    Inputs:
+    - internal.electiondata.my/candidates/dropdown.json
+    - internal.electiondata.my/candidates/all.json
+
+    Outputs:
+    - api.electiondata.my/v1/candidates/dropdown.json
+    - api.electiondata.my/v1/candidates/{uid}.json
+    """
+    os.makedirs(PATH_LOCAL_API, exist_ok=True)
+
+    # Dropdown: same as internal but with slug renamed to uid
+    with open(f"{PATH_LOCAL_INTERNAL}candidates/dropdown.json", encoding="utf-8") as f:
+        dropdown = j.load(f)
+    dropdown["data"] = [{"uid": r.pop("slug"), **r} if "slug" in r else r for r in dropdown["data"]]
+    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
+        j.dump(dropdown, f)
+    print("Wrote api candidates/dropdown.json")
+
+    # Individual candidate JSONs: seat field split into seat + state
+    with open(f"{PATH_LOCAL_INTERNAL}candidates/all.json", encoding="utf-8") as f:
+        all_data = j.load(f)
+
+    for uid, contests in all_data.items():
+        new_contests = []
+        for contest in contests:
+            seat_state = contest.get("seat")
+            if not seat_state:
+                new_contests.append(contest)
+                continue
+            parts = seat_state.rsplit(", ", 1)
+            new_contest = {}
+            for k, v in contest.items():
+                new_contest[k] = v
+                if k == "seat":
+                    new_contest["seat"] = parts[0]
+                    new_contest["state"] = parts[1] if len(parts) > 1 else None
+            new_contests.append(new_contest)
+        with open(f"{PATH_LOCAL_API}{uid}.json", "w", encoding="utf-8") as f:
+            j.dump({"data": new_contests}, f)
+    print(f"Wrote {len(all_data):,.0f} individual candidate JSONs")
+
+
+def upload_api_candidates_jsons(client, bucket):
+    """Upload API candidate JSON files to R2."""
+    files = g(f"{PATH_LOCAL_API}*.json")
+    print(f"\nUploading {len(files):,.0f} API candidate files to R2")
+    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
 if __name__ == "__main__":
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
     CLIENT = get_r2_client()
-    BUCKET = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_API = os.getenv("R2_BUCKET_API")
 
     make_candidates_df()
     make_candidates_jsons()
-    upload_candidates_jsons(CLIENT, BUCKET)
+    upload_candidates_jsons(CLIENT, BUCKET_INTERNAL)
     purge_candidates_cache()
+
+    make_api_candidates_jsons()
+    upload_api_candidates_jsons(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
