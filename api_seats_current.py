@@ -309,14 +309,15 @@ def make_seats():
         j.dump(all_data, f)
 
 
-def make_api_seats_jsons():
+def make_seats_api():
     """Generate per-seat JSON files for the public API containing only results.
 
     Inputs:
     - internal.electiondata.my/seats/current/all.json
 
     Outputs:
-    - api.electiondata.my/v1/seats/current/{slug}.json
+    - api.electiondata.my/v1/seats/current/{slug}.json (results up to first redelineation change)
+    - api.electiondata.my/v1/seats/current/{slug}-lineage.json (full results including lineage)
     """
     os.makedirs(PATH_LOCAL_API, exist_ok=True)
 
@@ -324,20 +325,25 @@ def make_api_seats_jsons():
         all_data = j.load(f)
 
     for slug, seat_data in all_data.items():
+        results = seat_data["results"]
+
+        cutoff = next(
+            (i for i, entry in enumerate(results) if "change_en" in entry),
+            len(results),
+        )
+
         with open(f"{PATH_LOCAL_API}{slug}.json", "w", encoding="utf-8") as f:
-            j.dump({"results": seat_data["results"]}, f)
-    print(f"Wrote {len(all_data):,.0f} individual seat JSONs")
+            j.dump({"results": results[:cutoff]}, f)
+
+        with open(f"{PATH_LOCAL_API}{slug}-lineage.json", "w", encoding="utf-8") as f:
+            j.dump({"results": results}, f)
+
+    print(
+        f"Wrote {len(all_data):,.0f} seat JSONs ({len(all_data):,.0f} standard + {len(all_data):,.0f} lineage)"
+    )
 
 
-def upload_api_seats_jsons(client, bucket):
-    """Upload API seat JSON files to R2."""
-    files = g(f"{PATH_LOCAL_API}*.json")
-    print(f"\nUploading {len(files):,.0f} API seat files to R2")
-    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
-    upload_bulk(client, bucket, files_to_upload, max_workers=120)
-
-
-def upload_current_seats_jsons(client, bucket, file_pattern="seats/current/*"):
+def upload_seats_jsons(client, bucket, file_pattern="seats/current/*"):
     """Upload data files matching pattern to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
     print(f"\nUploading {len(files):,.0f} files to R2")
@@ -345,7 +351,15 @@ def upload_current_seats_jsons(client, bucket, file_pattern="seats/current/*"):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
-def purge_current_seats_cache(prefix="seats/current/"):
+def upload_seats_api_jsons(client, bucket):
+    """Upload API seat JSON files to R2."""
+    files = g(f"{PATH_LOCAL_API}*.json")
+    print(f"\nUploading {len(files):,.0f} API seat files to R2")
+    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def purge_seats_cache(prefix="seats/current/"):
     """Purge Cloudflare cache for seat JSON files by URL prefix."""
     full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
     print(f"\nPurging cache prefix: {full_prefix}")
@@ -361,11 +375,11 @@ if __name__ == "__main__":
     BUCKET_API = os.getenv("R2_BUCKET_API")
 
     make_seats()
-    upload_current_seats_jsons(CLIENT, BUCKET_INTERNAL)
-    purge_current_seats_cache()
+    upload_seats_jsons(CLIENT, BUCKET_INTERNAL)
+    purge_seats_cache()
 
-    make_api_seats_jsons()
-    upload_api_seats_jsons(CLIENT, BUCKET_API)
+    make_seats_api()
+    upload_seats_api_jsons(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
