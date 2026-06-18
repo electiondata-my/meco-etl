@@ -292,7 +292,7 @@ def make_elections_jsons():
                     ]  # proper JSON null
                     res = [
                         {
-                            k: [] if isinstance(v, list) and (v == ["NEMO"] or v == [-1]) else v
+                            k: [] if isinstance(v, list) and (v in (["NEMO"], [-1])) else v
                             for k, v in record.items()
                         }
                         for record in res
