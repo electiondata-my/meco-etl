@@ -1,13 +1,16 @@
 """
-Module: internal_elections.py
+Module: api_elections.py
 
-This module processes and uploads election summary data for internal.electiondata.my.
+This module processes and uploads election summary data for internal.electiondata.my
+and the public API at api.electiondata.my.
 It:
 - Computes per-election voter turnout and rejected vote statistics grouped by state and type
 - Builds a per-seat winners table across all general elections and by-elections
 - Generates per-election JSON files (aggregate party stats and seat-level breakdowns)
 - Generates a consolidated by-elections JSON file
 - Uploads all election JSON files to R2 and copies them to the API bucket
+- Generates a public API byelections JSON with seat field trimmed (no state suffix)
+- Uploads the API byelections JSON to the API R2 bucket
 - Purges the Cloudflare cache for the elections prefix
 
 Inputs:
@@ -22,6 +25,7 @@ Outputs:
 - internal.electiondata.my/elections/{state}/{type}-{election}-by_seat.json
 - internal.electiondata.my/elections/all.json
 - internal.electiondata.my/elections/byelections.json (uploaded to R2)
+- api.electiondata.my/v1/elections/byelections.json (uploaded to R2)
 """
 
 import os
@@ -39,6 +43,7 @@ from helper import get_r2_client, upload_bulk, copy_bulk_within_r2, purge_cf_cac
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+PATH_LOCAL_API = "api.electiondata.my/v1/elections/"
 
 
 def make_election_stats():
@@ -298,17 +303,18 @@ def make_byelections_json():
         "seat",
         "state",
         "date",
+        "name",
         "party_uid",
         "party",
         "coalition_uid",
         "coalition",
-        "name",
-        "majority",
-        "majority_perc",
+        "voters_total",
         "voter_turnout",
         "voter_turnout_perc",
         "votes_rejected",
         "votes_rejected_perc",
+        "majority",
+        "majority_perc",
     ]
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat.parquet")
@@ -330,11 +336,44 @@ def make_byelections_json():
         j.dump(data, f)
 
 
+def make_api_byelections_json():
+    """Generate the public API byelections JSON.
+
+    Inputs:
+    - internal.electiondata.my/elections/byelections.json
+
+    Outputs:
+    - api.electiondata.my/v1/elections/byelections.json
+    """
+    os.makedirs(PATH_LOCAL_API, exist_ok=True)
+
+    with open(f"{PATH_LOCAL_INTERNAL}elections/byelections.json", encoding="utf-8") as f:
+        data = j.load(f)
+
+    for record in data["data"]:
+        seat_state = record.get("seat")
+        if seat_state:
+            parts = seat_state.rsplit(", ", 1)
+            record["seat"] = parts[0]
+
+    with open(f"{PATH_LOCAL_API}byelections.json", "w", encoding="utf-8") as f:
+        j.dump(data, f)
+    print("Wrote api elections/byelections.json")
+
+
 def upload_elections_jsons(client, bucket, file_pattern="elections/**/*"):
     """Upload elections JSON files to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
     print(f"\nUploading {len(files):,.0f} files to R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def upload_api_byelections_json(client, bucket):
+    """Upload API byelections JSON to R2."""
+    files = g(f"{PATH_LOCAL_API}*.json")
+    print(f"\nUploading {len(files):,.0f} API elections files to R2")
+    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
@@ -365,14 +404,17 @@ if __name__ == "__main__":
     BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
     BUCKET_API = os.getenv("R2_BUCKET_API")
 
-    make_election_stats()
-    make_elections_by_seat()
-    make_elections_jsons()
+    # make_election_stats()
+    # make_elections_by_seat()
+    # make_elections_jsons()
     make_byelections_json()
-    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
-    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
-    purge_elections_cache()
-    duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
+    # upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
+    # upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
+    # purge_elections_cache()
+    # duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
+
+    make_api_byelections_json()
+    upload_api_byelections_json(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
