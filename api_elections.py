@@ -356,6 +356,8 @@ def make_api_byelections_json():
             parts = seat_state.rsplit(", ", 1)
             record["seat"] = parts[0]
 
+    data["data"].sort(key=lambda r: r["date"], reverse=True)
+
     with open(f"{PATH_LOCAL_API}byelections.json", "w", encoding="utf-8") as f:
         j.dump(data, f)
     print("Wrote api elections/byelections.json")
@@ -404,14 +406,14 @@ if __name__ == "__main__":
     BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
     BUCKET_API = os.getenv("R2_BUCKET_API")
 
-    # make_election_stats()
-    # make_elections_by_seat()
-    # make_elections_jsons()
+    make_election_stats()
+    make_elections_by_seat()
+    make_elections_jsons()
     make_byelections_json()
-    # upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
-    # upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
-    # purge_elections_cache()
-    # duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
+    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
+    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
+    purge_elections_cache()
+    duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
 
     make_api_byelections_json()
     upload_api_byelections_json(CLIENT, BUCKET_API)
