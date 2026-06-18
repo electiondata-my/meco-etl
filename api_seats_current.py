@@ -1,4 +1,23 @@
-"""Generate seat data files for API."""
+"""
+Module: api_seats_current.py
+
+Processes and uploads current seat data for the public API at api.electiondata.my.
+It:
+- Reads and transforms seat data from internal parquets (results, lineage, demographics, map)
+- Generates a dropdown JSON and a consolidated all.json for internal use
+- Generates per-seat JSONs containing only the results key for the public API
+- Uploads all outputs to the appropriate R2 buckets
+
+Inputs:
+- internal.electiondata.my/elections_by_seat.parquet
+- internal.electiondata.my/lineage/*.parquet
+- internal.electiondata.my/seats/current/all.json
+
+Outputs:
+- internal.electiondata.my/seats/current/dropdown.json uploaded to R2
+- internal.electiondata.my/seats/current/all.json uploaded to R2
+- api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2
+"""
 
 import os
 import json as j
@@ -23,6 +42,7 @@ PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_MAPS_DELIMS = os.getenv("PATH_MAPS_DELIMS")
 PATH_VR = os.getenv("PATH_VR")
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+PATH_LOCAL_API = "api.electiondata.my/v1/seats/current/"
 
 
 def make_seats():
@@ -63,6 +83,8 @@ def make_seats():
     slugs = df.slug.tolist()
     data = {"data": df.to_dict(orient="records")}
     with open(f"{PATH_LOCAL_INTERNAL}seats/current/dropdown.json", "w", encoding="utf-8") as f:
+        j.dump(data, f)
+    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
         j.dump(data, f)
 
     # ----- sf (seat frame): contains all results by seat; ff (filter frame): contains all lineage information by seat; left-joining allows us to pull out everything tagged to a current_seat -----
@@ -287,6 +309,34 @@ def make_seats():
         j.dump(all_data, f)
 
 
+def make_api_seats_jsons():
+    """Generate per-seat JSON files for the public API containing only results.
+
+    Inputs:
+    - internal.electiondata.my/seats/current/all.json
+
+    Outputs:
+    - api.electiondata.my/v1/seats/current/{slug}.json
+    """
+    os.makedirs(PATH_LOCAL_API, exist_ok=True)
+
+    with open(f"{PATH_LOCAL_INTERNAL}seats/current/all.json", encoding="utf-8") as f:
+        all_data = j.load(f)
+
+    for slug, seat_data in all_data.items():
+        with open(f"{PATH_LOCAL_API}{slug}.json", "w", encoding="utf-8") as f:
+            j.dump({"results": seat_data["results"]}, f)
+    print(f"Wrote {len(all_data):,.0f} individual seat JSONs")
+
+
+def upload_api_seats_jsons(client, bucket):
+    """Upload API seat JSON files to R2."""
+    files = g(f"{PATH_LOCAL_API}*.json")
+    print(f"\nUploading {len(files):,.0f} API seat files to R2")
+    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
 def upload_current_seats_jsons(client, bucket, file_pattern="seats/current/*"):
     """Upload data files matching pattern to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
@@ -307,11 +357,15 @@ if __name__ == "__main__":
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
     CLIENT = get_r2_client()
-    BUCKET = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_API = os.getenv("R2_BUCKET_API")
 
     make_seats()
-    upload_current_seats_jsons(CLIENT, BUCKET)
+    upload_current_seats_jsons(CLIENT, BUCKET_INTERNAL)
     purge_current_seats_cache()
+
+    make_api_seats_jsons()
+    upload_api_seats_jsons(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")

@@ -177,7 +177,12 @@ def make_elections_jsons():
             "name",
             "party",
             "party_uid",
+            "coalition",
+            "coalition_uid",
             "party_lost",
+            "party_lost_uid",
+            "coalition_lost",
+            "coalition_lost_uid",
             "n_candidates",
             "voters_total",
             "voter_turnout",
@@ -216,13 +221,31 @@ def make_elections_jsons():
     dft.date = pd.to_datetime(dft.date).dt.date
     lf = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}consol_ballots.parquet")
     lf = lf[lf.result != "won"]
-    lf.loc[lf.result == "won_uncontested", "party"] = "NEMO"
+    for c, ph in zip(
+        ["party", "party_uid", "coalition", "coalition_uid"], ["NEMO", "NEMO", "NEMO", -1]
+    ):
+        lf.loc[lf.result == "won_uncontested", c] = ph
     lf.seat = lf.seat + ", " + lf.state
-    lf = lf[["date", "seat", "party"]].rename(columns={"party": "party_lost"})
-    lf = lf.groupby(["date", "seat"])["party_lost"].agg(list).reset_index()
+    lf = lf[["date", "seat", "party", "party_uid", "coalition", "coalition_uid"]].rename(
+        columns={
+            "party": "party_lost",
+            "party_uid": "party_lost_uid",
+            "coalition": "coalition_lost",
+            "coalition_uid": "coalition_lost_uid",
+        }
+    )
+    lf = (
+        lf.groupby(["date", "seat"])[
+            ["party_lost", "party_lost_uid", "coalition_lost", "coalition_lost_uid"]
+        ]
+        .agg(list)
+        .reset_index()
+    )
     dft = pd.merge(dft, lf, on=["date", "seat"], how="left")
     dft["n_candidates"] = dft["party_lost"].apply(lambda x: len(x) + 1)
-    dft["party_lost"] = dft["party_lost"].apply(lambda x: list(dict.fromkeys(x)))
+    for c in ["party", "coalition"]:
+        dft[c + "_lost"] = dft[c + "_lost"].apply(lambda x: list(dict.fromkeys(x)))
+        dft[c + "_lost_uid"] = dft[c + "_lost_uid"].apply(lambda x: list(dict.fromkeys(x)))
     dft.loc[dft.voter_turnout == 0, "n_candidates"] = 1
 
     assert (
@@ -269,14 +292,14 @@ def make_elections_jsons():
                     ]  # proper JSON null
                     res = [
                         {
-                            k: [] if isinstance(v, list) and v == ["NEMO"] else v
+                            k: [] if isinstance(v, list) and (v == ["NEMO"] or v == [-1]) else v
                             for k, v in record.items()
                         }
                         for record in res
                     ]
                     data[key] = res
 
-                base = f"{PATH_LOCAL_INTERNAL}elections/{state}/{election_type}-{election}"
+                base = f"{PATH_LOCAL_INTERNAL}elections/{state}/{election}"
                 with open(f"{base}-aggregate.json", "w", encoding="utf-8") as f:
                     j.dump({"by_party": data["by_party"], "stats": data["stats"]}, f)
                 with open(f"{base}-by_seat.json", "w", encoding="utf-8") as f:
@@ -409,14 +432,14 @@ if __name__ == "__main__":
     make_election_stats()
     make_elections_by_seat()
     make_elections_jsons()
-    make_byelections_json()
+    # make_byelections_json()
     upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
     upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/**/*")
     purge_elections_cache()
     duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
 
-    make_api_byelections_json()
-    upload_api_byelections_json(CLIENT, BUCKET_API)
+    # make_api_byelections_json()
+    # upload_api_byelections_json(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
