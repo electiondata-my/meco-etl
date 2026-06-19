@@ -301,8 +301,18 @@ def make_elections_jsons():
 
                 base = f"{PATH_LOCAL_API}{state}/{election}"
                 for c in ["by_party", "by_seat", "stats"]:
+                    records = data[c]
+                    if c == "by_seat":
+                        records = []
+                        for r in data[c]:
+                            r = dict(r)
+                            if r.get("seat") and ", " in r["seat"]:
+                                seat_part, state_part = r["seat"].rsplit(", ", 1)
+                                r["seat"] = seat_part
+                                r["state"] = state_part
+                            records.append(r)
                     with open(f"{base}-{c}.json", "w", encoding="utf-8") as f:
-                        j.dump({c: data[c]}, f)
+                        j.dump({c: records}, f)
 
                 all_data.setdefault(state, {}).setdefault(election_type, {})[election] = data
 
