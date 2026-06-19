@@ -23,6 +23,7 @@ Outputs:
 - internal.electiondata.my/elections_stats.parquet
 - internal.electiondata.my/elections_by_seat.parquet
 - internal.electiondata.my/elections/all.json (uploaded to internal R2)
+- internal.electiondata.my/elections/{state}/{election}.json (by_seat + stats; uploaded to internal R2)
 - api.electiondata.my/v1/elections/{state}/{type}-{election}-aggregate.json (uploaded to API R2)
 - api.electiondata.my/v1/elections/{state}/{type}-{election}-by_seat.json (uploaded to API R2)
 - api.electiondata.my/v1/elections/byelections.json (uploaded to API R2)
@@ -314,6 +315,12 @@ def make_elections_jsons():
                     with open(f"{base}-{c}.json", "w", encoding="utf-8") as f:
                         j.dump({c: records}, f)
 
+                os.makedirs(f"{PATH_LOCAL_INTERNAL}elections/{state}", exist_ok=True)
+                with open(
+                    f"{PATH_LOCAL_INTERNAL}elections/{state}/{election}.json", "w", encoding="utf-8"
+                ) as f:
+                    j.dump({"by_party": data["by_party"], "stats": data["stats"]}, f)
+
                 all_data.setdefault(state, {}).setdefault(election_type, {})[election] = data
 
     with open(f"{PATH_LOCAL_INTERNAL}elections/all.json", "w", encoding="utf-8") as f:
@@ -395,9 +402,11 @@ def make_byelections_api_json():
     print("Wrote api elections/byelections.json")
 
 
-def upload_elections_jsons(client, bucket, file_pattern="elections/**/*"):
+def upload_elections_jsons(client, bucket):
     """Upload elections JSON files to R2."""
-    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    files = g(f"{PATH_LOCAL_INTERNAL}elections/*.json") + g(
+        f"{PATH_LOCAL_INTERNAL}elections/**/*.json", recursive=True
+    )
     print(f"\nUploading {len(files):,.0f} files to R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
@@ -448,7 +457,7 @@ if __name__ == "__main__":
     make_byelections_json()
     make_byelections_api_json()
 
-    upload_elections_jsons(CLIENT, BUCKET_INTERNAL, file_pattern="elections/*")
+    upload_elections_jsons(CLIENT, BUCKET_INTERNAL)
     purge_elections_cache()
 
     upload_elections_api_jsons(CLIENT, BUCKET_API)
