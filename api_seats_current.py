@@ -85,7 +85,7 @@ def make_seats():
     with open(f"{PATH_LOCAL_INTERNAL}seats/current/dropdown.json", "w", encoding="utf-8") as f:
         j.dump(data, f)
     with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
-        j.dump(data, f)
+        j.dump({"seats": data["data"]}, f)
 
     # ----- sf (seat frame): contains all results by seat; ff (filter frame): contains all lineage information by seat; left-joining allows us to pull out everything tagged to a current_seat -----
     sf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat.parquet")

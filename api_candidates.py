@@ -189,7 +189,7 @@ def make_api_candidates_jsons():
         dropdown = j.load(f)
     dropdown["data"] = [{"uid": r.pop("slug"), **r} if "slug" in r else r for r in dropdown["data"]]
     with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
-        j.dump(dropdown, f)
+        j.dump({"candidates": dropdown["data"]}, f)
     print("Wrote api candidates/dropdown.json")
 
     # Individual candidate JSONs: seat field split into seat + state
@@ -212,7 +212,7 @@ def make_api_candidates_jsons():
                     new_contest["state"] = parts[1] if len(parts) > 1 else None
             new_contests.append(new_contest)
         with open(f"{PATH_LOCAL_API}{uid}.json", "w", encoding="utf-8") as f:
-            j.dump({"data": new_contests}, f)
+            j.dump({"results": new_contests}, f)
     print(f"Wrote {len(all_data):,.0f} individual candidate JSONs")
 
 

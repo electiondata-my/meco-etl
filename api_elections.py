@@ -26,7 +26,7 @@ Outputs:
 - api.electiondata.my/v1/elections/{state}/{type}-{election}-aggregate.json (uploaded to API R2)
 - api.electiondata.my/v1/elections/{state}/{type}-{election}-by_seat.json (uploaded to API R2)
 - api.electiondata.my/v1/elections/byelections.json (uploaded to API R2)
-- api.electiondata.my/v1/elections/dates.json (mirrored from internal/elections/dates.json to API R2)
+- api.electiondata.my/v1/elections/dropdown.json (mirrored from internal/elections/dropdown.json to API R2)
 """
 
 import os
@@ -302,7 +302,7 @@ def make_elections_jsons():
                 base = f"{PATH_LOCAL_API}{state}/{election}"
                 for c in ["by_party", "by_seat", "stats"]:
                     with open(f"{base}-{c}.json", "w", encoding="utf-8") as f:
-                        j.dump({"data": data[c]}, f)
+                        j.dump({c: data[c]}, f)
 
                 all_data.setdefault(state, {}).setdefault(election_type, {})[election] = data
 
@@ -381,7 +381,7 @@ def make_byelections_api_json():
     data["data"].sort(key=lambda r: r["date"], reverse=True)
 
     with open(f"{PATH_LOCAL_API}byelections.json", "w", encoding="utf-8") as f:
-        j.dump(data, f)
+        j.dump({"byelections": data["data"]}, f)
     print("Wrote api elections/byelections.json")
 
 
@@ -408,11 +408,13 @@ def upload_byelections_api_json(client, bucket):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
-def sync_dates_json_to_api(client, bucket):
-    """Mirror elections/dates.json from the internal folder to the API R2 bucket."""
-    src = f"{PATH_LOCAL_INTERNAL}elections/dates.json"
-    dest = "v1/elections/dates.json"
-    upload_bulk(client, bucket, [(src, dest)])
+def sync_dropdown_json_to_api(client, bucket):
+    """Mirror elections/dropdown.json from the internal folder to the API R2 bucket."""
+    with open(f"{PATH_LOCAL_INTERNAL}elections/dropdown.json", encoding="utf-8") as f:
+        data = j.load(f)
+    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
+        j.dump({"elections": data["elections"]}, f)
+    upload_bulk(client, bucket, [(f"{PATH_LOCAL_API}dropdown.json", "v1/elections/dropdown.json")])
 
 
 def purge_elections_cache(prefix="elections/"):
@@ -441,7 +443,7 @@ if __name__ == "__main__":
 
     upload_elections_api_jsons(CLIENT, BUCKET_API)
     upload_byelections_api_json(CLIENT, BUCKET_API)
-    sync_dates_json_to_api(CLIENT, BUCKET_API)
+    sync_dropdown_json_to_api(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
