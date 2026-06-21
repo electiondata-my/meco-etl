@@ -1,7 +1,25 @@
 """
-Module: internal_parties.py
+Module: api_parties.py
 
+Aggregates candidate-level results to party and coalition level, applies lineage normalisation, and generates JSON outputs for internal and public use.
+It:
+- Reads candidates.parquet and applies party/coalition lineage (numeric prefix → current uid, historical uid preserved in known_as_uid / known_as_coalition_uid)
+- Aggregates to party x election x state and coalition x election x state, writing parties.parquet and coalitions.parquet
+- Generates parties/dropdown.json — all contested party variants and all coalition variants, each with a maps_to field pointing to the canonical current uid
+- Generates parties/all.json — full time-series of results keyed by party-{uid} or coalition-{uid}
+- Uploads both JSONs to R2 and purges the Cloudflare cache
 
+Inputs:
+- internal.electiondata.my/candidates.parquet
+- {PATH_RESULTS_HEADLINE}/lookup_party.parquet
+- {PATH_RESULTS_HEADLINE}/lookup_coalition.parquet
+- {PATH_RESULTS_HEADLINE}/lookup_dates.parquet
+
+Outputs:
+- internal.electiondata.my/parties.parquet
+- internal.electiondata.my/coalitions.parquet
+- internal.electiondata.my/parties/dropdown.json uploaded to R2
+- internal.electiondata.my/parties/all.json uploaded to R2
 """
 
 import os
@@ -55,6 +73,12 @@ def make_parties_df():
     pf = pf[["uid", "party_uid", "party"]].drop_duplicates(subset=["uid"], keep="last")
     map_uid_party_uid = dict(zip(pf.uid, pf.party_uid))
 
+    cf = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}lookup_coalition.parquet")
+    map_coalition_uid_coalition = dict(zip(cf.coalition_uid, cf.coalition))
+    cf["uid"] = cf.coalition_uid.str.split("-").str[0]
+    cf = cf[["uid", "coalition_uid", "coalition"]].drop_duplicates(subset=["uid"], keep="last")
+    map_uid_coalition_uid = dict(zip(cf.uid, cf.coalition_uid))
+
     col_idx = [
         "party_uid",
         "party",
@@ -62,6 +86,8 @@ def make_parties_df():
         "known_as",
         "coalition",
         "coalition_uid",
+        "known_as_coalition_uid",
+        "known_as_coalition",
         "type",
         "state",
         "election_name",
@@ -72,6 +98,10 @@ def make_parties_df():
     df["known_as"] = df["party_uid"].map(map_party_uid_party_acronym)
     df["party_uid"] = df.party_uid.str.split("-").str[0].map(map_uid_party_uid)
     df["party"] = df.party_uid.map(map_party_uid_party_acronym)
+    df["known_as_coalition_uid"] = df["coalition_uid"]
+    df["known_as_coalition"] = df["coalition_uid"].map(map_coalition_uid_coalition)
+    df["coalition_uid"] = df.coalition_uid.str.split("-").str[0].map(map_uid_coalition_uid)
+    df["coalition"] = df.coalition_uid.map(map_coalition_uid_coalition)
     df = df[df.election_name != "By-Election"]  # Remove By-Elections, we are not interested in them
     df = df.drop(
         [
@@ -159,27 +189,59 @@ def make_parties_jsons():
     # -------- dropdown --------
     data = {"data": []}
 
-    df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}parties.parquet")
-    parties_contested = list(df.party_uid.unique())
-
-    df = pd.read_parquet(
+    pf = pd.read_parquet(
         f"{PATH_RESULTS_HEADLINE}lookup_party.parquet",
         columns=["party_uid", "party", "party_name_en", "party_name_bm"],
     )
-    df = df[df.party_uid.isin(parties_contested)]
-    tf = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}lookup_coalition.parquet")
-    tf = tf[tf.coalition_uid != 0]
-    tf.coalition_uid = tf.coalition_uid.astype(str).str.zfill(2) + "-" + tf.coalition
-    tf.columns = [x.replace("coalition", "party") for x in tf.columns]
+    pf_norm = pf.copy()
+    pf_norm["prefix"] = pf_norm.party_uid.str.split("-").str[0]
+    pf_norm = pf_norm.drop_duplicates(subset=["prefix"], keep="last")
+    map_prefix_party_uid = dict(zip(pf_norm.prefix, pf_norm.party_uid))
+
+    parties_df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}parties.parquet")
+    parties_contested = set(parties_df.known_as_uid.unique())
+
+    df = pf[pf.party_uid.isin(parties_contested)].copy()
+    df["maps_to"] = df.party_uid.str.split("-").str[0].map(map_prefix_party_uid)
+    df = df.rename(
+        columns={
+            "party_uid": "uid",
+            "party": "acronym",
+            "party_name_en": "name_en",
+            "party_name_bm": "name_bm",
+        }
+    )
+
+    cf = pd.read_parquet(
+        f"{PATH_RESULTS_HEADLINE}lookup_coalition.parquet",
+        columns=["coalition_uid", "coalition", "coalition_name_en", "coalition_name_bm"],
+    )
+    cf = cf[cf.coalition_uid != "000-ALONE"]
+    cf_norm = cf.copy()
+    cf_norm["prefix"] = cf_norm.coalition_uid.str.split("-").str[0]
+    cf_norm = cf_norm.drop_duplicates(subset=["prefix"], keep="last")
+    map_prefix_coalition_uid = dict(zip(cf_norm.prefix, cf_norm.coalition_uid))
+
+    tf = cf.copy()
+    tf["maps_to"] = tf.coalition_uid.str.split("-").str[0].map(map_prefix_coalition_uid)
+    tf = tf.rename(
+        columns={
+            "coalition_uid": "uid",
+            "coalition": "acronym",
+            "coalition_name_en": "name_en",
+            "coalition_name_bm": "name_bm",
+        }
+    )
+
     df = pd.concat(
         [
-            df.assign(type="party").sort_values(by="party"),
-            tf.assign(type="coalition").sort_values(by="party"),
+            df.assign(type="party").sort_values(by="acronym"),
+            tf.assign(type="coalition").sort_values(by="acronym"),
         ],
         axis=0,
         ignore_index=True,
     )
-    df = df.to_dict(orient="records")
+    df = df[["type", "uid", "maps_to", "acronym", "name_en", "name_bm"]].to_dict(orient="records")
 
     data["data"] = df
 
@@ -206,11 +268,20 @@ def make_parties_jsons():
     ]
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}parties.parquet")
-    df.coalition_uid = df.coalition_uid.astype(str).str.zfill(2) + "-" + df.coalition
+    # Use the historical coalition name (at time of election) rather than the normalised current name
+    df["coalition_uid"] = df["known_as_coalition_uid"]
+    df["coalition"] = df["known_as_coalition"]
+    df = df.drop(columns=["known_as_coalition_uid", "known_as_coalition"])
+
     tf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}coalitions.parquet").rename(
-        columns={"coalition_uid": "party_uid", "coalition": "party"}
+        columns={
+            "coalition_uid": "party_uid",
+            "coalition": "party",
+            "known_as_coalition_uid": "known_as_uid",
+            "known_as_coalition": "known_as",
+        }
     )
-    tf.party_uid = tf.party_uid.astype(str).str.zfill(2) + "-" + tf.party
+    tf = tf[tf.party_uid != "000-ALONE"]
     print(
         f"\nHandling {len(df.party_uid.unique()):,.0f} unique parties and {len(tf.party_uid.unique()):,.0f} unique coalitions"
     )
@@ -225,9 +296,12 @@ def make_parties_jsons():
     df = df[["party_uid", "party_type"] + col_party].sort_values(by="date", ascending=False)
     df = df.astype(object).where(df.notna(), other=None)  # proper JSON null
 
+    df["key"] = df.apply(
+        lambda r: ("party-" if r.party_type == "party" else "coalition-") + r.party_uid, axis=1
+    )
     all_data = {
-        party_uid: group.drop(columns="party_uid").to_dict(orient="records")
-        for party_uid, group in df.groupby("party_uid", sort=True)
+        key: group.drop(columns=["party_uid", "key"]).to_dict(orient="records")
+        for key, group in df.groupby("key", sort=True)
     }
 
     with open(f"{PATH_LOCAL_INTERNAL}parties/all.json", "w", encoding="utf-8") as f:

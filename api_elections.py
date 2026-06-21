@@ -15,8 +15,8 @@ It:
 - Purges the Cloudflare cache for the elections prefix
 
 Inputs:
-- internal.electiondata.my/candidates.parquet (created by internal_candidates.py)
-- internal.electiondata.my/parties.parquet
+- internal.electiondata.my/candidates.parquet (created by api_candidates.py)
+- internal.electiondata.my/parties.parquet (created by api_parties.py)
 - PATH_RESULTS_HEADLINE/consol_ballots.parquet
 
 Outputs:
@@ -200,7 +200,11 @@ def make_elections_jsons():
     dfm = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}parties.parquet").sort_values(
         by=["seats_won_perc", "votes_perc"], ascending=False
     )
-    dfm.coalition_uid = dfm.coalition_uid.astype(str).str.zfill(2) + "-" + dfm.coalition
+    # Use historical names/uids (at time of election) rather than normalised current values
+    dfm["party_uid"] = dfm["known_as_uid"]
+    dfm["party"] = dfm["known_as"]
+    dfm["coalition_uid"] = dfm["known_as_coalition_uid"]
+    dfm["coalition"] = dfm["known_as_coalition"]
 
     # dfs for aggregate stats (total voters, voter turnout, votes rejected, n_candidates)
     dfs = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_stats.parquet").fillna(0)
@@ -224,7 +228,7 @@ def make_elections_jsons():
     lf = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}consol_ballots.parquet")
     lf = lf[lf.result != "won"]
     for c, ph in zip(
-        ["party", "party_uid", "coalition", "coalition_uid"], ["NEMO", "NEMO", "NEMO", -1]
+        ["party", "party_uid", "coalition", "coalition_uid"], ["NEMO", "NEMO", "NEMO", "NEMO"]
     ):
         lf.loc[lf.result == "won_uncontested", c] = ph
     lf.seat = lf.seat + ", " + lf.state
@@ -293,7 +297,7 @@ def make_elections_jsons():
                     ]  # proper JSON null
                     res = [
                         {
-                            k: [] if isinstance(v, list) and (v in (["NEMO"], [-1])) else v
+                            k: [] if isinstance(v, list) and v == ["NEMO"] else v
                             for k, v in record.items()
                         }
                         for record in res
