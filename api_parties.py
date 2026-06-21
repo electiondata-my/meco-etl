@@ -7,7 +7,8 @@ It:
 - Aggregates to party x election x state and coalition x election x state, writing parties.parquet and coalitions.parquet
 - Generates parties/dropdown.json — all contested party variants and all coalition variants, each with a maps_to field pointing to the canonical current uid
 - Generates parties/all.json — full time-series of results keyed by party-{uid} or coalition-{uid}
-- Uploads both JSONs to R2 and purges the Cloudflare cache
+- Splits all.json into individual files under api.electiondata.my/v1/parties/ and api.electiondata.my/v1/coalitions/
+- Uploads everything to R2 and purges the Cloudflare cache
 
 Inputs:
 - internal.electiondata.my/candidates.parquet
@@ -18,8 +19,11 @@ Inputs:
 Outputs:
 - internal.electiondata.my/parties.parquet
 - internal.electiondata.my/coalitions.parquet
-- internal.electiondata.my/parties/dropdown.json uploaded to R2
-- internal.electiondata.my/parties/all.json uploaded to R2
+- internal.electiondata.my/parties/dropdown.json uploaded to internal R2
+- internal.electiondata.my/parties/all.json uploaded to internal R2
+- api.electiondata.my/v1/parties/dropdown.json uploaded to API R2
+- api.electiondata.my/v1/parties/{uid}/{state}-{type}.json uploaded to API R2 (31 files per party)
+- api.electiondata.my/v1/coalitions/{uid}/{state}-{type}.json uploaded to API R2 (31 files per coalition)
 """
 
 import os
@@ -35,6 +39,22 @@ from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache_pre
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+PATH_LOCAL_API_PARTIES = "api.electiondata.my/v1/parties/"
+PATH_LOCAL_API_COALITIONS = "api.electiondata.my/v1/coalitions/"
+
+STATES_PARLIMEN = [
+    "Malaysia", "Semenanjung",
+    "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan",
+    "Pahang", "Perak", "Perlis", "Pulau Pinang",
+    "Sabah", "Sarawak", "Selangor", "Terengganu",
+    "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya",
+]
+STATES_DUN = [
+    "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan",
+    "Pahang", "Perak", "Perlis", "Pulau Pinang",
+    "Sabah", "Sarawak", "Selangor", "Terengganu",
+]
+COMBOS = [(s, "parlimen") for s in STATES_PARLIMEN] + [(s, "dun") for s in STATES_DUN]
 
 
 def make_parties_df():
@@ -309,11 +329,67 @@ def make_parties_jsons():
         print("Wrote parties/all.json")
 
 
+def make_api_parties_jsons():
+    """Split internal all.json into per-state/type files under uid folders for the public API."""
+    os.makedirs(PATH_LOCAL_API_PARTIES, exist_ok=True)
+    os.makedirs(PATH_LOCAL_API_COALITIONS, exist_ok=True)
+
+    with open(f"{PATH_LOCAL_INTERNAL}parties/dropdown.json", encoding="utf-8") as f:
+        dropdown = j.load(f)
+    with open(f"{PATH_LOCAL_API_PARTIES}dropdown.json", "w", encoding="utf-8") as f:
+        j.dump(dropdown, f, ensure_ascii=False)
+    print("Wrote api parties/dropdown.json")
+
+    with open(f"{PATH_LOCAL_INTERNAL}parties/all.json", encoding="utf-8") as f:
+        all_data = j.load(f)
+
+    party_count = coalition_count = 0
+    for key, records in all_data.items():
+        if key.startswith("party-"):
+            uid = key[len("party-"):]
+            base_path = f"{PATH_LOCAL_API_PARTIES}{uid}/"
+            party_count += 1
+        elif key.startswith("coalition-"):
+            uid = key[len("coalition-"):]
+            base_path = f"{PATH_LOCAL_API_COALITIONS}{uid}/"
+            coalition_count += 1
+        else:
+            continue
+
+        os.makedirs(base_path, exist_ok=True)
+
+        # index existing records by (state, election_type)
+        is_coalition = key.startswith("coalition-")
+        lookup = {}
+        for r in records:
+            if is_coalition:
+                r = {k: v for k, v in r.items() if k not in ("coalition", "coalition_uid")}
+            lookup.setdefault((r["state"], r["type"]), []).append(r)
+
+        for state, election_type in COMBOS:
+            with open(f"{base_path}{state}-{election_type}.json", "w", encoding="utf-8") as f:
+                j.dump({"results": lookup.get((state, election_type), [])}, f, ensure_ascii=False)
+
+    print(f"Wrote {party_count} party folders and {coalition_count} coalition folders (31 files each)")
+
+
 def upload_parties_jsons(client, bucket, file_pattern="parties/*"):
-    """Upload data files matching pattern to R2."""
+    """Upload internal data files matching pattern to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
-    print(f"\nUploading {len(files):,.0f} files to R2")
+    print(f"\nUploading {len(files):,.0f} files to internal R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def upload_api_parties_jsons(client, bucket):
+    """Upload party and coalition API JSON files to the API R2 bucket."""
+    files = (
+        g(f"{PATH_LOCAL_API_PARTIES}*.json")
+        + g(f"{PATH_LOCAL_API_PARTIES}*/*.json")
+        + g(f"{PATH_LOCAL_API_COALITIONS}*/*.json")
+    )
+    print(f"\nUploading {len(files):,.0f} API party/coalition files to R2")
+    files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
@@ -329,12 +405,16 @@ if __name__ == "__main__":
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
     CLIENT = get_r2_client()
-    BUCKET = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
+    BUCKET_API = os.getenv("R2_BUCKET_API")
 
     make_parties_df()
     make_parties_jsons()
-    upload_parties_jsons(CLIENT, BUCKET)
+    upload_parties_jsons(CLIENT, BUCKET_INTERNAL)
     purge_parties_cache()
+
+    make_api_parties_jsons()
+    upload_api_parties_jsons(CLIENT, BUCKET_API)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
