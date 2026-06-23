@@ -1,0 +1,150 @@
+{
+    "catalogue_type": "TABLE",
+    "title": "TITLE",
+    "data_as_of": "yyyy-mm-dd",
+    "last_updated": "2026-06-23",
+    "next_update": "—",
+    "download": {
+        "parquet": {
+            "link": "https://lake.electiondata.my/results_saluran/IDENTIFIER.parquet",
+            "n_rows": 0,
+            "n_cols": 21,
+            "size_bytes": 0
+        },
+        "csv": {
+            "link": "https://lake.electiondata.my/results_saluran/IDENTIFIER.csv",
+            "n_rows": 0,
+            "n_cols": 21,
+            "size_bytes": 0
+        }
+    },
+    "description": "DESCRIPTION.",
+    "methodology": "This dataset was compiled from official Saluran-level results released by the Election Commission of Malaysia (EC). Since the EC does not publish Saluran-level results (Form 14) openly, the data had to be acquired in PDF format from various stakeholders who legally obtained the data, either directly from the EC or via agents at polling stations. Following acquisition, the dataset was produced by scraping, standardising, and validating the data for publication on ElectionData.MY. In particular, we ensured that any aggregation of the Saluran-level results results in a perfect match against official constituency-level results. An academic paper (preprint) documenting the full technical details on how this dataset was built and validated will be available by mid-July 2026.",
+    "fields": [
+        {
+            "name": "date",
+            "title": "Date",
+            "description": "[Date] Date of polling day in YYYY-MM-DD format"
+        },
+        {
+            "name": "election",
+            "title": "Election",
+            "description": "[String] Election identifier, e.g. GE-15, SE-15, By-Election"
+        },
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] Name of state where the contest took place"
+        },
+        {
+            "name": "seat",
+            "title": "Constituency",
+            "description": "[String] Code (P.xxX or N.xxX) and name of the constituency"
+        },
+        {
+            "name": "dm",
+            "title": "Polling District",
+            "description": "[String] Code (xxx/yy/zz) and name of the polling district (Daerah Mengundi)"
+        },
+        {
+            "name": "pm",
+            "title": "Polling Centre",
+            "description": "[String] Name of the polling centre (Pusat Mengundi)"
+        },
+        {
+            "name": "saluran",
+            "title": "Saluran (Queue)",
+            "description": "[Integer] Queue number within the polling station."
+        },
+        {
+            "name": "ballot_order",
+            "title": "Ballot Order",
+            "description": "[Integer] The candidate's position on the ballot paper (1 = first, 2 = second, etc.)"
+        },
+        {
+            "name": "candidate_uid",
+            "title": "Candidate UID",
+            "description": "[String] Unique identifier for the candidate"
+        },
+        {
+            "name": "name_on_ballot",
+            "title": "Name On Ballot",
+            "description": "[String] Candidate's name as it appeared on the ballot paper"
+        },
+        {
+            "name": "name",
+            "title": "Candidate Name",
+            "description": "[String] Candidate's harmonised name"
+        },
+        {
+            "name": "sex",
+            "title": "Sex",
+            "description": "[String] Sex of candidate; 'M' for male, 'F' for female"
+        },
+        {
+            "name": "ethnicity",
+            "title": "Ethnicity",
+            "description": "[String] Ethnicity of candidate (e.g. 'Malay', 'Chinese', etc.)"
+        },
+        {
+            "name": "age",
+            "title": "Age",
+            "description": "[Integer] Age of candidate in years at time of election (-1 if missing)"
+        },
+        {
+            "name": "party_on_ballot",
+            "title": "Party On Ballot",
+            "description": "[String] Short/abbreviated party name as it appeared on the ballot paper"
+        },
+        {
+            "name": "party_uid",
+            "title": "Party UID",
+            "description": "[String] Unique party identifier (code)"
+        },
+        {
+            "name": "party",
+            "title": "Party",
+            "description": "[String] Full official party name"
+        },
+        {
+            "name": "coalition_uid",
+            "title": "Coalition UID",
+            "description": "[String] Unique identifier for the coalition (if any). '000-ALONE' if no coalition"
+        },
+        {
+            "name": "coalition",
+            "title": "Coalition",
+            "description": "[String] Coalition name or 'ALONE' if not in a coalition"
+        },
+        {
+            "name": "votes",
+            "title": "Votes",
+            "description": "[Integer] Number of votes received by the candidate in this saluran"
+        },
+        {
+            "name": "votes_perc",
+            "title": "Vote Percentage",
+            "description": "[Float] Percentage of valid votes received by the candidate in this saluran"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan (2026). The citation will be updated in mid-July when a new preprint is published.",
+        "type": "misc",
+        "id": "electiondatamy2026",
+        "title": "Saluran-Level Election Results",
+        "author": "Thevananthan, Thevesh",
+        "journal": "ElectionData.MY",
+        "date": "2026-06-23"
+    },
+    "display_options": {
+        "precision": {
+            "default": 0,
+            "specific": {
+                "votes_perc": 1
+            },
+            "filter_columns": [],
+            "freeze_columns": []
+        }
+    },
+    "sample_data": []
+}

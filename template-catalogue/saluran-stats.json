@@ -1,0 +1,122 @@
+{
+    "catalogue_type": "TABLE",
+    "title": "TITLE",
+    "data_as_of": "yyyy-mm-dd",
+    "last_updated": "2026-06-23",
+    "next_update": "—",
+    "download": {
+        "parquet": {
+            "link": "https://lake.electiondata.my/results_saluran/IDENTIFIER.parquet",
+            "n_rows": 0,
+            "n_cols": 15,
+            "size_bytes": 0
+        },
+        "csv": {
+            "link": "https://lake.electiondata.my/results_saluran/IDENTIFIER.csv",
+            "n_rows": 0,
+            "n_cols": 15,
+            "size_bytes": 0
+        }
+    },
+    "description": "DESCRIPTION.",
+    "methodology": "This dataset was compiled from official Saluran-level results released by the Election Commission of Malaysia (EC). Since the EC does not publish Saluran-level results (Form 14) openly, the data had to be acquired in PDF format from various stakeholders who legally obtained the data, either directly from the EC or via agents at polling stations. Following acquisition, the dataset was produced by scraping, standardising, and validating the data for publication on ElectionData.MY. In particular, we ensured that any aggregation of the Saluran-level results results in a perfect match against official constituency-level results. An academic paper (preprint) documenting the full technical details on how this dataset was built and validated will be available by mid-July 2026.",
+    "fields": [
+        {
+            "name": "date",
+            "title": "Date",
+            "description": "[Date] Date of polling day in YYYY-MM-DD format"
+        },
+        {
+            "name": "election",
+            "title": "Election",
+            "description": "[String] Election identifier, e.g. GE-15, SE-15"
+        },
+        {
+            "name": "state",
+            "title": "State",
+            "description": "[String] Name of state where the contest took place"
+        },
+        {
+            "name": "seat",
+            "title": "Constituency",
+            "description": "[String] Code (P.xxX or N.xxX) and name of the constituency"
+        },
+        {
+            "name": "dm",
+            "title": "Polling District",
+            "description": "[String] Code (xxx/yy/zz) and name of the polling district (Daerah Mengundi)"
+        },
+        {
+            "name": "pm",
+            "title": "Polling Centre",
+            "description": "[String] Name of the polling centre (Pusat Mengundi)"
+        },
+        {
+            "name": "saluran",
+            "title": "Saluran (Queue)",
+            "description": "[Integer] Queue number within the polling station."
+        },
+        {
+            "name": "ballots_issued",
+            "title": "Ballots Issued",
+            "description": "[Integer] Total number of ballots issued to voters in this saluran"
+        },
+        {
+            "name": "ballots_not_returned",
+            "title": "Ballots Not Returned",
+            "description": "[Integer] Number of ballots issued but not returned (e.g. postal votes not received)"
+        },
+        {
+            "name": "votes_rejected",
+            "title": "Votes Rejected",
+            "description": "[Integer] Number of spoilt or rejected ballots in this saluran"
+        },
+        {
+            "name": "votes_valid",
+            "title": "Votes Valid",
+            "description": "[Integer] Number of valid votes cast in this saluran"
+        },
+        {
+            "name": "voters_total",
+            "title": "Total Voters",
+            "description": "[Integer] Total number of registered voters assigned to this saluran"
+        },
+        {
+            "name": "voter_turnout",
+            "title": "Voter Turnout (%)",
+            "description": "[Float] Ballots issued as a percentage of total registered voters at this saluran, except for postal votes, where it is computed by taking ballots returned as a percentage of ballots issued"
+        },
+        {
+            "name": "votes_rejected_perc",
+            "title": "Rejected Votes (%)",
+            "description": "[Float] Rejected votes as a percentage of ballots issued at this saluran"
+        },
+        {
+            "name": "ballots_not_returned_perc",
+            "title": "Ballots Not Returned (%)",
+            "description": "[Float] Unreturned ballots as a percentage of ballots issued at this saluran"
+        }
+    ],
+    "cite": {
+        "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan (2026). The citation will be updated in mid-July when a new preprint is published.",
+        "type": "misc",
+        "id": "electiondatamy2026",
+        "title": "Saluran-Level Election Results",
+        "author": "Thevananthan, Thevesh",
+        "journal": "ElectionData.MY",
+        "date": "2026-06-23"
+    },
+    "display_options": {
+        "precision": {
+            "default": 0,
+            "specific": {
+                "voter_turnout": 1,
+                "votes_rejected_perc": 1,
+                "ballots_not_returned_perc": 1
+            },
+            "filter_columns": [],
+            "freeze_columns": []
+        }
+    },
+    "sample_data": []
+}
