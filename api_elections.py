@@ -75,7 +75,11 @@ def make_election_stats():
     df["votes_valid"] = df.voter_turnout - df.ballots_not_returned
     df["voters_contested"] = df["voters_total"]
     df.loc[df.result.str.contains("uncontested"), "voters_contested"] = 0
-    df = df[(df.result.str.contains("won")) & (~df.election_name.str.contains("By-Election"))]
+    df = df[~df.election_name.str.contains("By-Election")]
+    # won rows supply full stats; pending rows (one per seat) contribute n_candidates and
+    # voters_total while voter_turnout stays 0 — correct for pre-election and election night
+    df_pending = df[df.result == "pending"].drop_duplicates(subset=["election_name", "state", "seat"])
+    df = pd.concat([df[df.result.str.contains("won")], df_pending], ignore_index=True)
     df = df[col_idx + col_summary]
     df = pd.concat(
         [df[df.election_name.str.contains("GE-")].assign(state="Malaysia"), df],
@@ -142,6 +146,17 @@ def make_elections_by_seat():
     df.loc[df.type == "dun", "seat_name"] = df.seat.str[5:]
     df["slug"] = df.seat.apply(generate_slug)
     df = df[col_final]
+    # add pending elections: one row per seat with null winner fields
+    pf = duckdb.query(
+        f"SELECT DISTINCT election_name, state, seat, date, type, voters_total FROM read_parquet('{PATH_LOCAL_INTERNAL}candidates.parquet') WHERE result = 'pending'"
+    ).df()
+    if not pf.empty:
+        pf["seat_name"] = pf.seat.str[6:]
+        pf.loc[pf.type == "dun", "seat_name"] = pf.seat.str[5:]
+        pf["slug"] = pf.seat.apply(generate_slug)
+        for col in [c for c in col_final if c not in pf.columns]:
+            pf[col] = None
+        df = pd.concat([df, pf[col_final]], ignore_index=True)
     print(f"\n{len(df):,.0f} unique contests")
     write_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat", df=df)
 
@@ -248,20 +263,36 @@ def make_elections_jsons():
         .reset_index()
     )
     dft = pd.merge(dft, lf, on=["date", "seat"], how="left")
-    dft["n_candidates"] = dft["party_lost"].apply(lambda x: len(x) + 1)
+    dft["n_candidates"] = dft["party_lost"].apply(lambda x: len(x) + 1 if isinstance(x, list) else 0)
     for c in ["party", "coalition"]:
-        dft[c + "_lost"] = dft[c + "_lost"].apply(lambda x: list(dict.fromkeys(x)))
-        dft[c + "_lost_uid"] = dft[c + "_lost_uid"].apply(lambda x: list(dict.fromkeys(x)))
+        dft[c + "_lost"] = dft[c + "_lost"].apply(lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else [])
+        dft[c + "_lost_uid"] = dft[c + "_lost_uid"].apply(lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else [])
     dft.loc[dft.voter_turnout == 0, "n_candidates"] = 1
+    # pending seats have no lf match so n_candidates=0 above; fill from the full candidate list
+    _pending_n = duckdb.query(
+        f"""
+        SELECT election_name, state, seat, COUNT(*) AS n_pending
+        FROM read_parquet('{PATH_LOCAL_INTERNAL}candidates.parquet')
+        WHERE result = 'pending'
+        GROUP BY election_name, state, seat
+        """
+    ).df()
+    dft = pd.merge(dft, _pending_n, on=["election_name", "state", "seat"], how="left")
+    dft.loc[dft.n_pending.notna(), "n_candidates"] = dft.loc[dft.n_pending.notna(), "n_pending"].astype(int)
+    dft = dft.drop(columns=["n_pending"]).sort_values(by="seat").reset_index(drop=True)
 
+    # pending elections appear in dfm (candidates announced) but not in dfs/dft (no winners yet)
+    pending_elections = set(dfm.election_name.unique()) - set(dfs.election_name.unique())
+    dfm_completed = dfm[~dfm.election_name.isin(pending_elections)]
+    dft_completed = dft[~dft.election_name.isin(pending_elections)]
     assert (
-        len(dfm.drop_duplicates(subset=col_combo))
+        len(dfm_completed.drop_duplicates(subset=col_combo))
         == len(dfs.drop_duplicates(subset=col_combo))
-        == len(dft.drop_duplicates(subset=col_combo))
+        == len(dft_completed.drop_duplicates(subset=col_combo))
     ), f"Mismatch between 3 components!\
-            by_party: {len(dfm.drop_duplicates(subset=col_combo))} \
+            by_party: {len(dfm_completed.drop_duplicates(subset=col_combo))} \
             stats: {len(dfs.drop_duplicates(subset=col_combo))} \
-            by_seat: {len(dft.drop_duplicates(subset=col_combo))}"
+            by_seat: {len(dft_completed.drop_duplicates(subset=col_combo))}"
 
     dft.date = pd.to_datetime(dft.date).dt.date.astype(str)
     dfm.date = pd.to_datetime(dfm.date).dt.date.astype(str)

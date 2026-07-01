@@ -123,6 +123,22 @@ def make_parties_df():
     df["coalition_uid"] = df.coalition_uid.str.split("-").str[0].map(map_uid_coalition_uid)
     df["coalition"] = df.coalition_uid.map(map_coalition_uid_coalition)
     df = df[df.election_name != "By-Election"]  # Remove By-Elections, we are not interested in them
+    # Compute actual seat counts per election+state before dropping the seat column.
+    # For pending elections, sum(seats_won)=0, so seats_total must come from here instead.
+    _sc = df.groupby(["election_name", "state"])["seat"].nunique().reset_index(name="_n_seats")
+    _sc_my = (
+        _sc[_sc.election_name.str.contains("GE-")]
+        .groupby("election_name")["_n_seats"].sum()
+        .reset_index()
+        .assign(state="Malaysia")
+    )
+    _sc_sem = (
+        _sc[_sc.election_name.str.contains("GE-") & (~_sc.state.isin(["Sarawak", "Sabah", "W.P. Labuan"]))]
+        .groupby("election_name")["_n_seats"].sum()
+        .reset_index()
+        .assign(state="Semenanjung")
+    )
+    _seat_counts = pd.concat([_sc, _sc_my, _sc_sem], ignore_index=True)
     df = df.drop(
         [
             "seat",
@@ -172,8 +188,12 @@ def make_parties_df():
     col_idx_sf = ["election_name", "state"]
     sf = df[col_idx_sf + ["votes", "seats_won"]].copy().groupby(col_idx_sf).sum().reset_index()
     sf.columns = col_idx_sf + ["votes_total", "seats_total"]
+    # for pending elections seats_total=0 (no winners yet); use precomputed seat counts instead
+    sf = pd.merge(sf, _seat_counts, on=col_idx_sf, how="left")
+    sf.loc[sf.seats_total == 0, "seats_total"] = sf.loc[sf.seats_total == 0, "_n_seats"].astype(int)
+    sf = sf.drop(columns=["_n_seats"])
     df = pd.merge(df, sf, on=col_idx_sf, how="left")
-    df["votes_perc"] = df.votes / df.votes_total * 100
+    df["votes_perc"] = df.votes / df.votes_total * 100  # NaN for pending elections (no votes cast yet)
     df["seats_contested_perc"] = df.seats_contested / df.seats_total * 100
     df["seats_won_perc"] = df.seats_won / df.seats_total * 100
     df.loc[(df.election_name == "SE-02") & (df.state == "Sabah"), "votes_perc"] = (
@@ -195,7 +215,7 @@ def make_parties_df():
     df = df.drop(columns=["party_uid", "party", "known_as_uid", "known_as"])
     df = df.groupby(col_idx[4:]).sum().reset_index()
     df.seats_total = ((df.seats_contested * 100) / (df.seats_contested_perc)).round(0).astype(int)
-    df.votes_total = ((df.votes * 100) / (df.votes_perc)).round(0).astype(int)
+    df.votes_total = ((df.votes * 100) / (df.votes_perc)).round(0).fillna(0).astype(int)
     for c in ["votes_total", "seats_total"]:
         assert len(df.drop_duplicates(subset=["election_name", "state"])) == len(
             df.drop_duplicates(subset=["election_name", "state", c])

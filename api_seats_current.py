@@ -90,6 +90,7 @@ def make_seats():
     # ----- sf (seat frame): contains all results by seat; ff (filter frame): contains all lineage information by seat; left-joining allows us to pull out everything tagged to a current_seat -----
     sf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat.parquet")
     sf.date = pd.to_datetime(sf.date).dt.date.astype(str)
+    _pending_elections = set(sf[sf.party.isna()].election_name.unique())
     ff = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}lineage/filter.parquet")
     ff.current_seat = ff.current_seat.apply(generate_slug)
     ff.seat = ff.seat + ", " + ff.state
@@ -144,6 +145,9 @@ def make_seats():
         ff = ff.sort_values(by=["current_seat", "date"], ignore_index=True)
 
     sf = pd.merge(sf, ff, on=["election_name", "state", "seat", "date"], how="left")
+    # pending elections are not in the lineage filter; the seat being contested IS the current seat
+    pending_mask = sf["election_name"].isin(_pending_elections) & sf["current_seat"].isna()
+    sf.loc[pending_mask, "current_seat"] = sf.loc[pending_mask, "slug"]
 
     # ----- lf (lineage frame): contains all lineage descriptions by seat -----
     lf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}lineage/desc.parquet")

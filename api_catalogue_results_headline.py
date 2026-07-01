@@ -100,12 +100,14 @@ def make_results_headline():
 
 
 def upload_catalogue_results_headline(client, bucket):
-    """Upload catalogue results_headline JSONs to R2."""
+    """Upload catalogue results_headline JSONs and index to R2."""
     files = g(f"{PATH_LOCAL_INTERNAL}catalogue/results_headline/*.json")
-    print(f"\nUploading {len(files):,.0f} files to R2")
     files_to_upload = sorted(
         [(f, f.replace(PATH_LOCAL_INTERNAL, "").replace("/results_headline", "")) for f in files]
     )
+    index_path = f"{PATH_LOCAL_INTERNAL}catalogue/index.json"
+    files_to_upload.append((index_path, index_path.replace(PATH_LOCAL_INTERNAL, "")))
+    print(f"\nUploading {len(files_to_upload):,.0f} files to R2")
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 

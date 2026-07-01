@@ -111,7 +111,7 @@ def make_candidates_jsons():
     print(f"\nHandling {len(candidates_df.slug.unique()):,.0f} unique candidates")
     df = candidates_df.copy()
     df = (
-        df.assign(c=1, w=df.result.str.contains("won").astype(int), l=lambda x: 1 - x.w)
+        df.assign(c=1, w=df.result.str.contains("won").astype(int), l=df.result.str.contains("lost").astype(int))
         .groupby(["slug", "name"], as_index=False)
         .agg({"c": "sum", "w": "sum", "l": "sum"})
         .sort_values(["c", "w"], ascending=False)
