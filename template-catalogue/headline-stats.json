@@ -6,19 +6,19 @@
     "next_update": "—",
     "download": {
         "parquet": {
-            "link": "https://lake.electiondata.my/results_headline/headline_stats.parquet",
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.parquet",
             "n_rows": 222,
             "n_cols": 15,
             "size_bytes": 24634
         },
         "csv": {
-            "link": "https://lake.electiondata.my/results_headline/headline_stats.csv",
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.csv",
             "n_rows": 222,
             "n_cols": 15,
             "size_bytes": 33497
         },
         "excel": {
-            "link": "https://lake.electiondata.my/results_headline/headline_stats.xlsx",
+            "link": "https://lake.electiondata.my/results_headline/IDENTIFIER.xlsx",
             "n_rows": 222,
             "n_cols": 15,
             "size_bytes": 33497

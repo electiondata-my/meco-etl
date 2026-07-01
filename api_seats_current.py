@@ -245,8 +245,14 @@ def make_seats():
     }
 
     # ----- demographic data -----
-    pyramid = get_voter_pyramid_from_vr(f"{PATH_VR}ge15_2022.parquet")
-    heatmap = get_age_x_ethnicity_from_vr(f"{PATH_VR}ge15_2022.parquet")
+    pyramid = get_voter_pyramid_from_vr(f"{PATH_VR}ge15_2022.parquet", reference_year=2022)
+    heatmap = get_age_x_ethnicity_from_vr(f"{PATH_VR}ge15_2022.parquet", reference_year=2022)
+    pyramid_jhr_se16 = get_voter_pyramid_from_vr(
+        f"{PATH_VR}jhr_se16_2026.parquet", reference_year=2026
+    )
+    heatmap_jhr_se16 = get_age_x_ethnicity_from_vr(
+        f"{PATH_VR}jhr_se16_2026.parquet", reference_year=2026
+    )
 
     # ----- stitch everything together into a single JSON object -----
 
@@ -275,15 +281,19 @@ def make_seats():
         results.sort(key=lambda x: x.get("date", ""), reverse=True)
 
         # demographic data
+        is_johor_se16 = slug[0] == "n" and "-johor" in slug
+        pyramid_source = pyramid_jhr_se16 if is_johor_se16 else pyramid
+        heatmap_source = heatmap_jhr_se16 if is_johor_se16 else heatmap
+
         tfp = (
-            pyramid[pyramid.slug == slug]
+            pyramid_source[pyramid_source.slug == slug]
             .copy()
             .drop(columns=["slug"])
             .pivot(index="age", columns="sex", values="voters")
             .reset_index()
         )
         tfh = (
-            heatmap[heatmap.slug == slug]
+            heatmap_source[heatmap_source.slug == slug]
             .copy()
             .drop(columns=["slug"])
             .set_index("ethnicity")

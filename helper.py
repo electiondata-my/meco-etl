@@ -562,12 +562,13 @@ def get_center_and_zoom(files=[]):
     return res
 
 
-def get_voter_pyramid_from_vr(vr=None):
+def get_voter_pyramid_from_vr(vr=None, reference_year=None):
     """
     Generate a voter age-sex pyramid dataset from a voter registry Parquet file.
 
     Args:
         vr (str, optional): Path to the voter registry Parquet file.
+        reference_year (int): Year against which birth_year is compared to compute age.
 
     Returns:
         pandas.DataFrame: DataFrame with columns:
@@ -581,10 +582,10 @@ def get_voter_pyramid_from_vr(vr=None):
     """
     query = f"""
     WITH base AS (
-        SELECT state, parlimen AS seat, sex, LEAST(2022 - birth_year, 100) AS age
+        SELECT state, parlimen AS seat, sex, LEAST({reference_year} - birth_year, 100) AS age
         FROM read_parquet('{vr}')
         UNION ALL
-        SELECT state, dun AS seat, sex, LEAST(2022 - birth_year, 100) AS age
+        SELECT state, dun AS seat, sex, LEAST({reference_year} - birth_year, 100) AS age
         FROM read_parquet('{vr}')
         WHERE NOT state LIKE 'W.P.%'
     ),
@@ -631,7 +632,7 @@ def get_voter_pyramid_from_vr(vr=None):
     return df
 
 
-def get_age_x_ethnicity_from_vr(vr=None):
+def get_age_x_ethnicity_from_vr(vr=None, reference_year=None):
     """
     Returns a DataFrame aggregating counts of voters by age and ethnicity for each seat and state
     from the given voter registry parquet file.
@@ -644,6 +645,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
 
     Inputs:
     - vr: Path to .parquet file containing voter registry data.
+    - reference_year: Year against which birth_year is compared to compute age.
 
     Outputs:
     - DataFrame with voting age population counts grouped by state, seat, ethnicity, and age band.
@@ -660,7 +662,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
                 WHEN state = 'Sarawak' AND ethnicity IN ('Bumi Sabah', 'Indian')      THEN 'Other'
                 ELSE ethnicity
             END AS ethnicity,
-            LEAST(2022 - birth_year, 100) AS age
+            LEAST({reference_year} - birth_year, 100) AS age
         FROM read_parquet('{vr}')
         UNION ALL
         SELECT
@@ -673,7 +675,7 @@ def get_age_x_ethnicity_from_vr(vr=None):
                 WHEN state = 'Sarawak' AND ethnicity IN ('Bumi Sabah', 'Indian')      THEN 'Other'
                 ELSE ethnicity
             END AS ethnicity,
-            LEAST(2022 - birth_year, 100) AS age
+            LEAST({reference_year} - birth_year, 100) AS age
         FROM read_parquet('{vr}')
         WHERE NOT state LIKE 'W.P.%'
     ),
