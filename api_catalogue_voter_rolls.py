@@ -102,6 +102,15 @@ def _build_catalogue(template, entry):
 
     cat["sample_data"] = sample_rows
 
+    if stem.startswith("ge12_"):
+        cat["fields"].append(
+            {
+                "name": "do_not_link",
+                "title": "Do Not Link",
+                "description": "[Integer] 1 if a valid IC number could not be obtained for this row, meaning it cannot be linked to subsequent voter rolls; 0 otherwise",
+            }
+        )
+
     return cat
 
 
