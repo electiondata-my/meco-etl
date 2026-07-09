@@ -19,7 +19,6 @@ Outputs:
 """
 
 import os
-import sys
 import json as j
 from glob import glob as g
 from datetime import datetime
