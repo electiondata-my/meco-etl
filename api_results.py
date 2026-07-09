@@ -36,6 +36,26 @@ PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
 INTERNAL_BASE_URL = "https://internal.electiondata.my"
 
 
+def _voters_total_v_avg(df):
+    """Per-contest voters_total relative to the average seat size.
+
+    Returns a (seat, date, voters_total_v_avg) frame where the ratio is:
+    - GE parliament seats: voters_total over the mean across all parliament seats
+      in the same general election
+    - SE state seats: voters_total over the mean across all state (DUN) seats
+      within the same state in that state election
+    By-elections are absent (they become null on merge).
+    """
+    contests = df.drop_duplicates(subset=["seat", "date"]).copy()
+    ge = contests[contests.election_name.str.startswith("GE")].copy()
+    se = contests[contests.election_name.str.startswith("SE")].copy()
+    ge["avg"] = ge.groupby("election_name").voters_total.transform("mean")
+    se["avg"] = se.groupby(["election_name", "state"]).voters_total.transform("mean")
+    out = pd.concat([ge, se])
+    out["voters_total_v_avg"] = out.voters_total / out["avg"]
+    return out[["seat", "date", "voters_total_v_avg"]]
+
+
 def _affected_result_keys(uids):
     """R2 keys (results/{seat}/{date}.json) for every contest any of `uids` is in."""
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
@@ -55,11 +75,13 @@ def make_results(uids=None):
 
     # fmt: off
     col_api_ballot = ["name", "party_uid", "party", "coalition_uid", "coalition", "votes", "votes_perc", "result"]
-    col_api_stats = ["date", "voters_total","voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
+    col_api_stats = ["date", "voters_total", "voters_total_v_avg", "voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
     # fmt: on
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
     df.date = pd.to_datetime(df.date).dt.date.astype(str)
+    # Computed over the full dataset before any uid filtering so averages are stable.
+    df = df.merge(_voters_total_v_avg(df), on=["seat", "date"], how="left")
     if uids is not None:
         contests = df[df.slug.isin(uids)][["seat", "date"]].drop_duplicates()
         df = df.merge(contests, on=["seat", "date"])
