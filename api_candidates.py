@@ -19,6 +19,7 @@ Outputs:
 """
 
 import os
+import sys
 import json as j
 from glob import glob as g
 from datetime import datetime
@@ -111,7 +112,11 @@ def make_candidates_jsons():
     print(f"\nHandling {len(candidates_df.slug.unique()):,.0f} unique candidates")
     df = candidates_df.copy()
     df = (
-        df.assign(c=1, w=df.result.str.contains("won").astype(int), l=df.result.str.contains("lost").astype(int))
+        df.assign(
+            c=1,
+            w=df.result.str.contains("won").astype(int),
+            l=df.result.str.contains("lost").astype(int),
+        )
         .groupby(["slug", "name"], as_index=False)
         .agg({"c": "sum", "w": "sum", "l": "sum"})
         .sort_values(["c", "w"], ascending=False)
@@ -171,8 +176,13 @@ def purge_candidates_cache(prefix="candidates/"):
     purge_cf_cache_prefix([full_prefix])
 
 
-def make_api_candidates_jsons():
+def make_api_candidates_jsons(uids=None):
     """Generate candidate JSON files for the public API.
+
+    Args:
+        uids: optional list of candidate uids. When given, only those candidates'
+            JSONs are (re)generated; the dropdown is always regenerated. Use this
+            for a targeted refresh instead of rewriting every candidate file.
 
     Inputs:
     - internal.electiondata.my/candidates/dropdown.json
@@ -196,6 +206,14 @@ def make_api_candidates_jsons():
     with open(f"{PATH_LOCAL_INTERNAL}candidates/all.json", encoding="utf-8") as f:
         all_data = j.load(f)
 
+    if uids is not None:
+        missing = [u for u in uids if u not in all_data]
+        if missing:
+            print(
+                f"WARNING: {len(missing)} uid(s) not in candidates/all.json: {', '.join(missing)}"
+            )
+        all_data = {u: all_data[u] for u in uids if u in all_data}
+
     for uid, contests in all_data.items():
         new_contests = []
         for contest in contests:
@@ -216,9 +234,16 @@ def make_api_candidates_jsons():
     print(f"Wrote {len(all_data):,.0f} individual candidate JSONs")
 
 
-def upload_api_candidates_jsons(client, bucket):
-    """Upload API candidate JSON files to R2."""
-    files = g(f"{PATH_LOCAL_API}*.json")
+def upload_api_candidates_jsons(client, bucket, uids=None):
+    """Upload API candidate JSON files to R2.
+
+    When uids is given, upload only the dropdown plus those candidates' files.
+    """
+    if uids is None:
+        files = g(f"{PATH_LOCAL_API}*.json")
+    else:
+        files = [f"{PATH_LOCAL_API}dropdown.json"] + [f"{PATH_LOCAL_API}{u}.json" for u in uids]
+        files = [f for f in files if os.path.exists(f)]
     print(f"\nUploading {len(files):,.0f} API candidate files to R2")
     files_to_upload = sorted([(f, f.replace("api.electiondata.my/", "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
@@ -232,13 +257,15 @@ if __name__ == "__main__":
     BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
     BUCKET_API = os.getenv("R2_BUCKET_API")
 
+    UIDS = None
+
     make_candidates_df()
     make_candidates_jsons()
     upload_candidates_jsons(CLIENT, BUCKET_INTERNAL)
     purge_candidates_cache()
 
-    make_api_candidates_jsons()
-    upload_api_candidates_jsons(CLIENT, BUCKET_API)
+    make_api_candidates_jsons(UIDS)
+    upload_api_candidates_jsons(CLIENT, BUCKET_API, UIDS)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")

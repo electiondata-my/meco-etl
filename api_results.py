@@ -15,6 +15,7 @@ Outputs:
 """
 
 import os
+import sys
 import json as j
 from glob import glob as g
 from datetime import datetime
@@ -22,15 +23,34 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import get_r2_client, upload_bulk, copy_bulk_within_r2, purge_cf_cache_prefix
+from helper import (
+    get_r2_client,
+    upload_bulk,
+    copy_bulk_within_r2,
+    purge_cf_cache,
+    purge_cf_cache_prefix,
+)
 
 load_dotenv()
 
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+INTERNAL_BASE_URL = "https://internal.electiondata.my"
 
 
-def make_results():
-    """Generate per-seat, per-date result JSON files and write them to disk."""
+def _affected_result_keys(uids):
+    """R2 keys (results/{seat}/{date}.json) for every contest any of `uids` is in."""
+    df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
+    df["date"] = pd.to_datetime(df.date).dt.date.astype(str)
+    sub = df[df.slug.isin(uids)][["seat", "date"]].drop_duplicates()
+    return [f"results/{r.seat}/{r.date}.json" for r in sub.itertuples(index=False)]
+
+
+def make_results(uids=None):
+    """Generate per-seat, per-date result JSON files and write them to disk.
+
+    When uids is given, only the contests (seat, date) those candidates appear in
+    are regenerated — every candidate in those contests is still written.
+    """
     print("")
     data = {"ballot": [], "stats": []}
 
@@ -41,6 +61,10 @@ def make_results():
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
     df.date = pd.to_datetime(df.date).dt.date.astype(str)
+    if uids is not None:
+        contests = df[df.slug.isin(uids)][["seat", "date"]].drop_duplicates()
+        df = df.merge(contests, on=["seat", "date"])
+        print(f"Restricting to {len(contests):,.0f} contest(s) for {len(uids)} uid(s)")
     print(f"{df.drop_duplicates(subset=['seat','date']).shape[0]:,.0f} results to create")
     for seat in df.seat.unique():
         if not os.path.exists(f"{PATH_LOCAL_INTERNAL}results/{seat}"):
@@ -73,24 +97,52 @@ def make_results():
                 j.dump(data, f)
 
 
-def upload_results_jsons(client, bucket, file_pattern="results/**/*"):
-    """Upload results JSON files to R2."""
-    files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+def upload_results_jsons(client, bucket, file_pattern="results/**/*", uids=None):
+    """Upload results JSON files to R2.
+
+    When uids is given, upload only the affected contests' files.
+    """
+    if uids is None:
+        files = g(f"{PATH_LOCAL_INTERNAL}{file_pattern}.json")
+    else:
+        files = [f"{PATH_LOCAL_INTERNAL}{k}" for k in _affected_result_keys(uids)]
+        files = [f for f in files if os.path.exists(f)]
     print(f"\nUploading {len(files):,.0f} files to R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_INTERNAL, "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
-def purge_results_cache(prefix="results/"):
-    """Purge Cloudflare cache for results JSON files by URL prefix."""
-    full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
-    print(f"\nPurging cache prefix: {full_prefix}")
-    purge_cf_cache_prefix([full_prefix])
+def purge_results_cache(prefix="results/", uids=None):
+    """Purge Cloudflare cache for results JSON files.
+
+    Purges the whole prefix by default, or only the affected keys when uids is given.
+    """
+    if uids is None:
+        full_prefix = f"{PATH_LOCAL_INTERNAL}{prefix}"
+        print(f"\nPurging cache prefix: {full_prefix}")
+        purge_cf_cache_prefix([full_prefix])
+    else:
+        keys = _affected_result_keys(uids)
+        print(f"\nPurging {len(keys):,.0f} results URL(s) from cache")
+        purge_cf_cache(keys, INTERNAL_BASE_URL)
 
 
-def duplicate_for_api(client, source_bucket, dest_bucket, prefix="results/"):
-    """Copy results files from the internal bucket into v1/ on the API bucket."""
-    copy_bulk_within_r2(client, source_bucket, dest_bucket, prefix, dest_prefix=f"v1/{prefix}")
+def duplicate_for_api(client, source_bucket, dest_bucket, prefix="results/", uids=None):
+    """Copy results files from the internal bucket into v1/ on the API bucket.
+
+    When uids is given, copy only the affected contests' keys.
+    """
+    if uids is None:
+        copy_bulk_within_r2(client, source_bucket, dest_bucket, prefix, dest_prefix=f"v1/{prefix}")
+        return
+    keys = _affected_result_keys(uids)
+    for key in keys:
+        client.copy_object(
+            CopySource={"Bucket": source_bucket, "Key": key},
+            Bucket=dest_bucket,
+            Key=f"v1/{key}",
+        )
+    print(f"\nCopied {len(keys):,.0f} results file(s) to {dest_bucket}/v1/")
 
 
 if __name__ == "__main__":
@@ -101,10 +153,12 @@ if __name__ == "__main__":
     BUCKET_INTERNAL = os.getenv("R2_BUCKET_INTERNAL")
     BUCKET_API = os.getenv("R2_BUCKET_API")
 
-    make_results()
-    upload_results_jsons(CLIENT, BUCKET_INTERNAL)
-    purge_results_cache()
-    duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API)
+    UIDS = None
+
+    make_results(UIDS)
+    upload_results_jsons(CLIENT, BUCKET_INTERNAL, uids=UIDS)
+    purge_results_cache(uids=UIDS)
+    duplicate_for_api(CLIENT, BUCKET_INTERNAL, BUCKET_API, uids=UIDS)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
