@@ -57,7 +57,12 @@ from api_elections import (
     sync_dropdown_json_to_api,
     PATH_LOCAL_API as PATH_API_ELECTIONS,
 )
-from api_results import make_results, PATH_LOCAL_INTERNAL, INTERNAL_BASE_URL
+from api_results import (
+    make_results,
+    purge_results_cache,
+    PATH_LOCAL_INTERNAL,
+    INTERNAL_BASE_URL,
+)
 from api_seats_current import (
     make_seats,
     upload_seats_jsons,
@@ -121,17 +126,25 @@ def get_se16_scope():
     return scope
 
 
-def upload_elections_se16(client, bucket):
-    """Upload the internal election files touched by SE-16, and purge their cache.
+def se16_election_keys():
+    """R2 keys for the internal election files touched by SE-16.
 
     make_elections_jsons() rewrites all 459 internal election files, but SE-16 only
     changes its own — plus all.json, the consolidated file that contains it. The rest
     are byte-identical to what is already in R2.
     """
-    keys = ["elections/all.json", f"elections/{STATE}/{ELECTION}.json"]
+    return ["elections/all.json", f"elections/{STATE}/{ELECTION}.json"]
+
+
+def upload_elections_se16(client, bucket, keys):
+    """Upload the internal election files touched by SE-16."""
     files_to_upload = [(f"{PATH_LOCAL_INTERNAL}{k}", k) for k in keys]
     print(f"\nUploading {len(files_to_upload):,.0f} election files to R2")
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
+def purge_elections_se16(keys):
+    """Purge the Cloudflare cache for the internal SE-16 election files."""
     print(f"\nPurging {len(keys):,.0f} election URL(s) from cache")
     purge_cf_cache(keys, INTERNAL_BASE_URL)
 
@@ -152,10 +165,14 @@ def upload_results_se16(client, bucket, keys):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
-def purge_results_se16(keys):
-    """Purge the Cloudflare cache for the SE-16 results files."""
-    print(f"\nPurging {len(keys):,.0f} results URL(s) from cache")
-    purge_cf_cache(keys, INTERNAL_BASE_URL)
+def purge_results_se16():
+    """Purge the Cloudflare cache for the whole internal results prefix.
+
+    Purged by prefix rather than by key: results keys carry the raw seat name
+    ("results/N.19 Yong Peng, Johor/..."), so a URL purge would send unencoded spaces
+    and commas and miss the percent-encoded key Cloudflare actually caches.
+    """
+    purge_results_cache()
 
 
 def duplicate_results_se16(client, source_bucket, dest_bucket, keys):
@@ -230,10 +247,12 @@ if __name__ == "__main__":
     upload_parties_jsons(CLIENT, BUCKET_INTERNAL)
     purge_parties_cache()
 
+    ELECTION_KEYS = se16_election_keys()
     make_election_stats()
     make_elections_by_seat()
     make_elections_jsons()
-    upload_elections_se16(CLIENT, BUCKET_INTERNAL)
+    upload_elections_se16(CLIENT, BUCKET_INTERNAL, ELECTION_KEYS)
+    purge_elections_se16(ELECTION_KEYS)
 
     make_seats()
     upload_seats_jsons(CLIENT, BUCKET_INTERNAL)
@@ -245,7 +264,7 @@ if __name__ == "__main__":
     RESULT_KEYS = se16_result_keys(SCOPE["seat_names"])
     make_results(SCOPE["candidates"])
     upload_results_se16(CLIENT, BUCKET_INTERNAL, RESULT_KEYS)
-    purge_results_se16(RESULT_KEYS)
+    purge_results_se16()
 
     # ----- api: Johor SE-16 only -----
     make_api_candidates_jsons(SCOPE["candidates"])

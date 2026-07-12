@@ -2,7 +2,7 @@
     "catalogue_type": "TABLE",
     "title": "TITLE",
     "data_as_of": "yyyy-mm-dd",
-    "last_updated": "2026-07-01",
+    "last_updated": "2026-07-11",
     "next_update": "—",
     "download": {
         "parquet": {
@@ -95,7 +95,7 @@
         {
             "name": "votes_rejected_perc",
             "title": "Rejected Votes (%)",
-            "description": "[Float] Rejected votes as a percentage of ballots issued. Null if uncontested"
+            "description": "[Float] Rejected votes as a percentage of ballots returned (ballots issued less ballots not returned). Null if uncontested"
         },
         {
             "name": "ballots_not_returned_perc",

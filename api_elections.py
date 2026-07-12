@@ -72,13 +72,16 @@ def make_election_stats():
     # fmt: on
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
-    df["votes_valid"] = df.voter_turnout - df.ballots_not_returned
+    # voter_turnout is a count here (ballots issued); voter_turnout_perc holds the percentage
+    df["votes_valid"] = df.voter_turnout - df.ballots_not_returned - df.votes_rejected
     df["voters_contested"] = df["voters_total"]
     df.loc[df.result.str.contains("uncontested"), "voters_contested"] = 0
     df = df[~df.election_name.str.contains("By-Election")]
     # won rows supply full stats; pending rows (one per seat) contribute n_candidates and
     # voters_total while voter_turnout stays 0 — correct for pre-election and election night
-    df_pending = df[df.result == "pending"].drop_duplicates(subset=["election_name", "state", "seat"])
+    df_pending = df[df.result == "pending"].drop_duplicates(
+        subset=["election_name", "state", "seat"]
+    )
     df = pd.concat([df[df.result.str.contains("won")], df_pending], ignore_index=True)
     df = df[col_idx + col_summary]
     df = pd.concat(
@@ -103,7 +106,8 @@ def make_election_stats():
         ignore_index=True,
     )
     df["voter_turnout_perc"] = df.voter_turnout / df.voters_total * 100
-    df["votes_rejected_perc"] = df.votes_rejected / df.votes_valid * 100
+    # denominator is ballots returned, which votes_valid + votes_rejected reconstructs
+    df["votes_rejected_perc"] = df.votes_rejected / (df.votes_valid + df.votes_rejected) * 100
     df = df.sort_values(by=["type", "state", "election_name"], ascending=[False, True, True])
     df = pd.concat(
         [
@@ -135,12 +139,13 @@ def make_elections_by_seat():
         "date", "election_name", "type",
         "party", "party_uid", "coalition", "coalition_uid", "name",
         "voters_total", "voter_turnout", "voter_turnout_perc",
-        "majority", "majority_perc", "votes_rejected", "votes_rejected_perc",
+        "majority", "majority_perc", "votes_valid", "votes_rejected", "votes_rejected_perc",
     ]
     # fmt: on
 
     df = duckdb.query(
-        f"SELECT * FROM read_parquet('{PATH_LOCAL_INTERNAL}candidates.parquet') WHERE result LIKE 'won%'"
+        f"SELECT *, voter_turnout - ballots_not_returned - votes_rejected AS votes_valid "
+        f"FROM read_parquet('{PATH_LOCAL_INTERNAL}candidates.parquet') WHERE result LIKE 'won%'"
     ).df()
     df["seat_name"] = df.seat.str[6:]
     df.loc[df.type == "dun", "seat_name"] = df.seat.str[5:]
@@ -183,6 +188,7 @@ def make_elections_jsons():
             "voters_total",
             "voter_turnout",
             "voter_turnout_perc",
+            "votes_valid",
             "votes_rejected",
             "votes_rejected_perc",
             "n_candidates",
@@ -206,6 +212,7 @@ def make_elections_jsons():
             "voter_turnout_perc",
             "majority",
             "majority_perc",
+            "votes_valid",
             "votes_rejected",
             "votes_rejected_perc",
         ],
@@ -263,22 +270,28 @@ def make_elections_jsons():
         .reset_index()
     )
     dft = pd.merge(dft, lf, on=["date", "seat"], how="left")
-    dft["n_candidates"] = dft["party_lost"].apply(lambda x: len(x) + 1 if isinstance(x, list) else 0)
+    dft["n_candidates"] = dft["party_lost"].apply(
+        lambda x: len(x) + 1 if isinstance(x, list) else 0
+    )
     for c in ["party", "coalition"]:
-        dft[c + "_lost"] = dft[c + "_lost"].apply(lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else [])
-        dft[c + "_lost_uid"] = dft[c + "_lost_uid"].apply(lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else [])
+        dft[c + "_lost"] = dft[c + "_lost"].apply(
+            lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else []
+        )
+        dft[c + "_lost_uid"] = dft[c + "_lost_uid"].apply(
+            lambda x: list(dict.fromkeys(x)) if isinstance(x, list) else []
+        )
     dft.loc[dft.voter_turnout == 0, "n_candidates"] = 1
     # pending seats have no lf match so n_candidates=0 above; fill from the full candidate list
-    _pending_n = duckdb.query(
-        f"""
+    _pending_n = duckdb.query(f"""
         SELECT election_name, state, seat, COUNT(*) AS n_pending
         FROM read_parquet('{PATH_LOCAL_INTERNAL}candidates.parquet')
         WHERE result = 'pending'
         GROUP BY election_name, state, seat
-        """
-    ).df()
+        """).df()
     dft = pd.merge(dft, _pending_n, on=["election_name", "state", "seat"], how="left")
-    dft.loc[dft.n_pending.notna(), "n_candidates"] = dft.loc[dft.n_pending.notna(), "n_pending"].astype(int)
+    dft.loc[dft.n_pending.notna(), "n_candidates"] = dft.loc[
+        dft.n_pending.notna(), "n_pending"
+    ].astype(int)
     dft = dft.drop(columns=["n_pending"]).sort_values(by="seat").reset_index(drop=True)
 
     # pending elections appear in dfm (candidates announced) but not in dfs/dft (no winners yet)
@@ -385,6 +398,7 @@ def make_byelections_json():
         "voters_total",
         "voter_turnout",
         "voter_turnout_perc",
+        "votes_valid",
         "votes_rejected",
         "votes_rejected_perc",
         "majority",
