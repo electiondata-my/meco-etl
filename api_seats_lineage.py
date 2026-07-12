@@ -71,7 +71,7 @@ def make_lineage_geo():
             state,
             dun,
             parlimen,
-            CAST(regexp_extract(filename, '(\d{{4}})', 1) AS INTEGER) AS year
+            CAST(regexp_extract(filename, '(\d{4})', 1) AS INTEGER) AS year
         FROM read_parquet($delims, filename=True)
         ORDER BY state ASC, year DESC, dun ASC
     """,
@@ -153,10 +153,10 @@ def make_lineage_filter_desc(seat_type="parlimen"):
     if seat_type == "parlimen":
         df = df[df.state == "Malaysia"].drop(columns=["state", "year"])
     else:
-        df = df[df.state != "Malaysia"].drop(columns=["state", "year"])
+        df = df[df.state != "Malaysia"].drop(columns=["year"])
     df = df.rename(columns={"peninsular": "Peninsular", "sabah": "Sabah", "sarawak": "Sarawak"})
     df = df.melt(
-        id_vars=["election"],
+        id_vars=["election"] if seat_type == "parlimen" else ["election", "state"],
         value_vars=["Peninsular", "Sabah", "Sarawak"],
         var_name="state_join",
         value_name="date_old",
@@ -170,7 +170,16 @@ def make_lineage_filter_desc(seat_type="parlimen"):
     )
     res["state_join"] = res.state
     res.loc[~res.state.isin(["Sabah", "Sarawak"]), "state_join"] = "Peninsular"
-    df = pd.merge(df, res, on=["state_join", "date_old"], how="left").drop_duplicates()
+
+    # A state election maps only to its own state's seats: SE-N is a per-state label, and two
+    # states sharing it need not share a delimitation vintage. Parliamentary elections are
+    # national, so they still match every seat in the region.
+    if seat_type == "parlimen":
+        df = pd.merge(df, res, on=["state_join", "date_old"], how="left").drop_duplicates()
+    else:
+        df = pd.merge(
+            df.drop(columns=["state_join"]), res, on=["state", "date_old"], how="left"
+        ).drop_duplicates()
     df = df[["current_seat", "election", "state", "dominant_ancestor"]].rename(
         columns={"dominant_ancestor": "seat"}
     )
