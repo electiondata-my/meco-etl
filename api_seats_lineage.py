@@ -28,6 +28,7 @@ Outputs (auxiliary):
 """
 
 import os
+import re
 from datetime import datetime
 from glob import glob as g
 import duckdb
@@ -118,6 +119,51 @@ def make_lineage_geo():
     write_csv_parquet(f"{PATH_LOCAL_INTERNAL}lineage/parlimen_geo", rf)
 
 
+def make_parlimen_renumbering():
+    """
+    The function:
+        Builds a map from a parlimen seat's delimitation-vintage label to the label it carried at
+        each election. Parlimen seats are numbered nationally in the order Peninsular -> Sabah ->
+        Sarawak, so a region's numbers shift whenever a region ahead of it gains seats. Peninsular
+        and Sabah redelineate together, but Sarawak runs on its own cycle: at GE-04, GE-07, GE-09
+        and GE-11 it kept its existing boundaries while the seats ahead of it grew, so its seats
+        were renumbered without being redrawn. The lineage CSV labels each ancestor with the number
+        in force at its own delimitation vintage, which is not the number the seat was contested
+        under at those elections.
+
+        Each region's numbering starts at 1 within its own vintage map, so the election-time number
+        is the seat's rank within its region plus the seat count of every region ahead of it at
+        that election. DUN seats are numbered per state and so are unaffected.
+    Inputs:
+        DELIMS_TO_ELECTIONS
+        PATH_MAPS_DELIMS/{region}_{year}_parlimen.parquet
+    Returns:
+        dict: (election, vintage_label) -> election_label
+    """
+    regions = ["peninsular", "sabah", "sarawak"]
+    seats = {}
+    for region in regions:
+        for f in g(f"{PATH_MAPS_DELIMS}{region}_*_parlimen.parquet"):
+            year = re.search(r"(\d{4})", os.path.basename(f)).group(1)
+            seats[(region, year)] = sorted(pd.read_parquet(f).parlimen.unique())
+
+    df = pd.read_csv(DELIMS_TO_ELECTIONS, dtype="str")
+    df = df[df.state == "Malaysia"]
+
+    renumbering = {}
+    for _, row in df.iterrows():
+        offset = 0
+        for region in regions:
+            year = row[region]
+            if year == "0":  # region did not yet elect MPs at this election
+                continue
+            for rank, label in enumerate(seats[(region, year)], start=1):
+                name = re.sub(r"^P\.\d+\s+", "", label)
+                renumbering[(row.election, label)] = f"P.{offset + rank:03d} {name}"
+            offset += len(seats[(region, year)])
+    return renumbering
+
+
 def make_lineage_filter_desc(seat_type="parlimen"):
     """
     The function:
@@ -141,6 +187,7 @@ def make_lineage_filter_desc(seat_type="parlimen"):
     Inputs:
         DELIMS_TO_ELECTIONS
         PATH_LINEAGE/lineage_{seat_type}.csv
+        PATH_MAPS_DELIMS/{region}_{year}_parlimen.parquet (parlimen only, for renumbering)
         internal.electiondata.my/lineage/{seat_type}_filter.parquet (re-read for final validation)
     Outputs:
         internal.electiondata.my/lineage/{seat_type}_filter.parquet/.csv
@@ -183,6 +230,15 @@ def make_lineage_filter_desc(seat_type="parlimen"):
     df = df[["current_seat", "election", "state", "dominant_ancestor"]].rename(
         columns={"dominant_ancestor": "seat"}
     )
+
+    # the ancestor is labelled with the number in force at its delimitation vintage; restate it as
+    # the number the seat was actually contested under at this election
+    if seat_type == "parlimen":
+        renumbering = make_parlimen_renumbering()
+        missing = {(e, s) for e, s in zip(df.election, df.seat) if (e, s) not in renumbering}
+        assert not missing, f"Ancestors absent from the delimitation maps: {sorted(missing)}"
+        df["seat"] = [renumbering[(e, s)] for e, s in zip(df.election, df.seat)]
+
     df = df.sort_values(by=["state", "current_seat", "election"])
     write_csv_parquet(f"{PATH_LOCAL_INTERNAL}lineage/{seat_type}_filter", df)
 
