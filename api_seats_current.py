@@ -253,6 +253,12 @@ def make_seats():
     heatmap_jhr_se16 = get_age_x_ethnicity_from_vr(
         f"{PATH_VR}jhr_se16_2026.parquet", reference_year=2026
     )
+    pyramid_nsn_se16 = get_voter_pyramid_from_vr(
+        f"{PATH_VR}nsn_se16_2026.parquet", reference_year=2026
+    )
+    heatmap_nsn_se16 = get_age_x_ethnicity_from_vr(
+        f"{PATH_VR}nsn_se16_2026.parquet", reference_year=2026
+    )
 
     # ----- stitch everything together into a single JSON object -----
 
@@ -282,8 +288,13 @@ def make_seats():
 
         # demographic data
         is_johor_se16 = slug[0] == "n" and "-johor" in slug
-        pyramid_source = pyramid_jhr_se16 if is_johor_se16 else pyramid
-        heatmap_source = heatmap_jhr_se16 if is_johor_se16 else heatmap
+        is_nsn_se16 = slug[0] == "n" and "-nsn" in slug
+        pyramid_source = (
+            pyramid_jhr_se16 if is_johor_se16 else pyramid_nsn_se16 if is_nsn_se16 else pyramid
+        )
+        heatmap_source = (
+            heatmap_jhr_se16 if is_johor_se16 else heatmap_nsn_se16 if is_nsn_se16 else heatmap
+        )
 
         tfp = (
             pyramid_source[pyramid_source.slug == slug]
