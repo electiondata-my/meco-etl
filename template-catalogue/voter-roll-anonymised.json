@@ -2,7 +2,7 @@
     "catalogue_type": "TABLE",
     "title": "TITLE",
     "data_as_of": "yyyy-mm-dd",
-    "last_updated": "2026-06-23",
+    "last_updated": "2026-07-16",
     "next_update": "—",
     "download": {
         "parquet": {
@@ -24,7 +24,7 @@
         {
             "name": "uid",
             "title": "Voter UID",
-            "description": "[String] Anonymised unique identifier for the voter; this UID is consistent acros"
+            "description": "[String] Anonymised unique identifier for the voter; this UID is consistent across all voter roll datasets"
         },
         {
             "name": "birth_year",
