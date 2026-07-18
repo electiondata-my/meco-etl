@@ -3,11 +3,12 @@
 logs/*
 CLAUDE.md
 
-# local buckets
+# deliberately local only
 api.electiondata.my/*
 internal.electiondata.my/*
 lake.electiondata.my/*
 analysis*.py
+output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
