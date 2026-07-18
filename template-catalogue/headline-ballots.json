@@ -2,7 +2,7 @@
     "catalogue_type": "TABLE",
     "title": "TITLE",
     "data_as_of": "yyyy-mm-dd",
-    "last_updated": "2026-07-11",
+    "last_updated": "2026-07-18",
     "next_update": "—",
     "download": {
         "parquet": {
