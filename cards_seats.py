@@ -24,6 +24,18 @@ from cards.seatcard_data import build_seat_cards
 
 
 def run_once(election: str, state: str, out: Path, seat: str | None = None) -> int:
+    """
+    Render seat cards for a given election and state.
+
+    Args:
+        election: The election code, e.g. SE-15, SE-16
+        state: The state name, e.g. Johor
+        out: The output root directory
+        seat: The seat name or slug substring, e.g. 'Bukit Batu' or 'n51-bukit-batu-johor'
+
+    Returns:
+        The number of cards rendered
+    """
     cards = build_seat_cards(election, state)
     if seat:
         needle = seat.lower()
@@ -36,6 +48,15 @@ def run_once(election: str, state: str, out: Path, seat: str | None = None) -> i
 
 
 def main() -> None:
+    """
+    Main entry point for the seat card generator.
+
+    Args:
+        election: The election code, e.g. SE-15, SE-16
+        state: The state name, e.g. Johor
+        out: The output root directory
+        seat: The seat name or slug substring, e.g. 'Bukit Batu' or 'n51-bukit-batu-johor'
+    """
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--election", required=True, help="Election code, e.g. SE-15, SE-16")
     ap.add_argument("--state", required=True, help="State name, e.g. Johor")
@@ -60,8 +81,10 @@ def main() -> None:
         run_once(args.election, args.state, out, args.seat)
         return
 
-    print(f"Watch mode: re-rendering {args.election}/{args.state} every {args.watch}s "
-          f"(Ctrl-C to stop).")
+    print(
+        f"Watch mode: re-rendering {args.election}/{args.state} every {args.watch}s "
+        f"(Ctrl-C to stop)."
+    )
     while True:
         run_once(args.election, args.state, out, args.seat)
         time.sleep(args.watch)
