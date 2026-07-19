@@ -47,15 +47,8 @@ PATH_LOCAL_API = "api.electiondata.my/v1/seats/current/"
 
 def make_seats():
     """Generate seat data files for API."""
-    data = {
-        "map_plot": {
-            "zoom": 0,
-            "center": [0, 0],
-            "polygons": {},
-        },
-        "map_lineage": [],
-        "results": [],
-    }
+    os.makedirs(f"{PATH_LOCAL_INTERNAL}seats/current/", exist_ok=True)
+    os.makedirs(PATH_LOCAL_API, exist_ok=True)
 
     col_api_seat = [
         "election_name",
@@ -81,11 +74,11 @@ def make_seats():
         | ((df.state == "Sarawak") & (df.election_name == "SE-12"))
     ][["seat", "slug", "type"]]
     slugs = df.slug.tolist()
-    data = {"data": df.to_dict(orient="records")}
+    dropdown = df.to_dict(orient="records")
     with open(f"{PATH_LOCAL_INTERNAL}seats/current/dropdown.json", "w", encoding="utf-8") as f:
-        j.dump(data, f)
+        j.dump({"data": dropdown}, f)
     with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
-        j.dump({"seats": data["data"]}, f)
+        j.dump({"seats": dropdown}, f)
 
     # ----- sf (seat frame): contains all results by seat; ff (filter frame): contains all lineage information by seat; left-joining allows us to pull out everything tagged to a current_seat -----
     sf = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}elections_by_seat.parquet")
@@ -245,20 +238,38 @@ def make_seats():
     }
 
     # ----- demographic data -----
+    # DUN seats in a state that has since held its own election use that state's roll;
+    # everything else falls back to the GE-15 roll. Keys are the state suffix that
+    # generate_slug() emits (state name in full, e.g. "-negeri-sembilan", NOT "-nsn").
+    # To add a state, add a row here -- the assertions below fail loudly if the suffix
+    # matches no seat, or if a matched seat is missing from the roll.
+    dun_rolls = {
+        "-johor": (f"{PATH_VR}jhr_se16_2026.parquet", 2026),
+        "-negeri-sembilan": (f"{PATH_VR}nsn_se16_2026.parquet", 2026),
+    }
+
     pyramid = get_voter_pyramid_from_vr(f"{PATH_VR}ge15_2022.parquet", reference_year=2022)
     heatmap = get_age_x_ethnicity_from_vr(f"{PATH_VR}ge15_2022.parquet", reference_year=2022)
-    pyramid_jhr_se16 = get_voter_pyramid_from_vr(
-        f"{PATH_VR}jhr_se16_2026.parquet", reference_year=2026
-    )
-    heatmap_jhr_se16 = get_age_x_ethnicity_from_vr(
-        f"{PATH_VR}jhr_se16_2026.parquet", reference_year=2026
-    )
-    pyramid_nsn_se16 = get_voter_pyramid_from_vr(
-        f"{PATH_VR}nsn_se16_2026.parquet", reference_year=2026
-    )
-    heatmap_nsn_se16 = get_age_x_ethnicity_from_vr(
-        f"{PATH_VR}nsn_se16_2026.parquet", reference_year=2026
-    )
+    dun_frames = {
+        suffix: (
+            get_voter_pyramid_from_vr(path, reference_year=year),
+            get_age_x_ethnicity_from_vr(path, reference_year=year),
+        )
+        for suffix, (path, year) in dun_rolls.items()
+    }
+
+    def get_demographic_frames(slug):
+        """Return the (pyramid, heatmap) frames whose voter roll covers this seat."""
+        if slug.startswith("n"):
+            for suffix, frames in dun_frames.items():
+                if slug.endswith(suffix):
+                    return frames
+        return pyramid, heatmap
+
+    for suffix in dun_rolls:
+        matched = [s for s in slugs if s.startswith("n") and s.endswith(suffix)]
+        assert matched, f"Voter roll override '{suffix}' matches no seat -- check the suffix!"
+        print(f"Voter roll override '{suffix}' applies to {len(matched):,.0f} DUN seats")
 
     # ----- stitch everything together into a single JSON object -----
 
@@ -287,25 +298,20 @@ def make_seats():
         results.sort(key=lambda x: x.get("date", ""), reverse=True)
 
         # demographic data
-        is_johor_se16 = slug[0] == "n" and "-johor" in slug
-        is_nsn_se16 = slug[0] == "n" and "-negeri-sembilan" in slug
-        pyramid_source = (
-            pyramid_jhr_se16 if is_johor_se16 else pyramid_nsn_se16 if is_nsn_se16 else pyramid
-        )
-        heatmap_source = (
-            heatmap_jhr_se16 if is_johor_se16 else heatmap_nsn_se16 if is_nsn_se16 else heatmap
-        )
+        pyramid_source, heatmap_source = get_demographic_frames(slug)
+        pyramid_rows = pyramid_source[pyramid_source.slug == slug]
+        heatmap_rows = heatmap_source[heatmap_source.slug == slug]
+        assert not pyramid_rows.empty, f"No pyramid data for {slug} in the selected voter roll!"
+        assert not heatmap_rows.empty, f"No heatmap data for {slug} in the selected voter roll!"
 
         tfp = (
-            pyramid_source[pyramid_source.slug == slug]
-            .copy()
+            pyramid_rows.copy()
             .drop(columns=["slug"])
             .pivot(index="age", columns="sex", values="voters")
             .reset_index()
         )
         tfh = (
-            heatmap_source[heatmap_source.slug == slug]
-            .copy()
+            heatmap_rows.copy()
             .drop(columns=["slug"])
             .set_index("ethnicity")
             .transpose()
