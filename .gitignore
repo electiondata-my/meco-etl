@@ -9,6 +9,7 @@ internal.electiondata.my/*
 lake.electiondata.my/*
 analysis*.py
 output/*
+tests_api/output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
