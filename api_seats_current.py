@@ -288,7 +288,7 @@ def make_seats():
 
         # demographic data
         is_johor_se16 = slug[0] == "n" and "-johor" in slug
-        is_nsn_se16 = slug[0] == "n" and "-nsn" in slug
+        is_nsn_se16 = slug[0] == "n" and "-negeri-sembilan" in slug
         pyramid_source = (
             pyramid_jhr_se16 if is_johor_se16 else pyramid_nsn_se16 if is_nsn_se16 else pyramid
         )
