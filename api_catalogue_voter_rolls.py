@@ -58,7 +58,7 @@ def _id_to_stem(entry_id):
 
 def save_csv():
     """Write CSV versions of every voter roll parquet file using DuckDB COPY."""
-    parquets = sorted(RESULTS_DIR.glob("*2026.parquet"))
+    parquets = sorted(RESULTS_DIR.glob("*.parquet"))
     print(f"\nWriting CSV for {len(parquets)} parquet files")
     con = duckdb.connect()
     for pq in parquets:
@@ -69,7 +69,7 @@ def save_csv():
 
 def upload_voter_roll_files(client, bucket):
     """Upload all voter roll parquet and CSV files to the lake R2 bucket."""
-    files = g(f"{PATH_LOCAL_LAKE}voter_rolls/*2026*")
+    files = g(f"{PATH_LOCAL_LAKE}voter_rolls/*")
     print(f"\nUploading {len(files):,.0f} files to lake R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_LAKE, "")) for f in files])
     upload_bulk(client, bucket, files_to_upload, max_workers=10)
