@@ -1,13 +1,13 @@
 """
-Module: api_jhr_se16.py
+Module: api_election_night.py
 
-Runs the full pipeline for the internal site, but restricts the public API upload to the Johor SE-16 election only.
+Runs the full pipeline for the internal site, but restricts the public API upload to the Negeri Sembilan SE-16 election only.
 It:
 - Regenerates and uploads the internal candidates, parties and seats/current files (dropdown + all.json)
-- Regenerates the internal election files, but uploads only elections/all.json and elections/Johor/SE-16.json
+- Regenerates the internal election files, but uploads only elections/all.json and elections/Negeri Sembilan/SE-16.json
 - Regenerates and uploads the internal results files for the SE-16 polling date only
 - Derives the SE-16 contestants (candidates, parties, coalitions, seats) from consol_ballots
-- Uploads to the API bucket only: the SE-16 candidates, their parties/coalitions (Johor-dun), the 56 Johor duns, the Johor SE-16 election, and the 56 SE-16 results files
+- Uploads to the API bucket only: the SE-16 candidates, their parties/coalitions (Negeri Sembilan-dun), the 36 Negeri Sembilan duns, the Negeri Sembilan SE-16 election, and the 36 SE-16 results files
 
 Inputs:
 - {PATH_RESULTS_HEADLINE}consol_ballots.parquet
@@ -16,13 +16,13 @@ Inputs:
 
 Outputs:
 - internal.electiondata.my/{candidates,parties,seats/current}/{dropdown,all}.json uploaded to R2
-- internal.electiondata.my/elections/{all.json,Johor/SE-16.json} uploaded to R2
-- internal.electiondata.my/results/{seat}/2026-07-11.json uploaded to R2
+- internal.electiondata.my/elections/{all.json,Negeri Sembilan/SE-16.json} uploaded to R2
+- internal.electiondata.my/results/{seat}/2026-08-01.json uploaded to R2
 - api.electiondata.my/v1/candidates/{uid}.json uploaded to R2 (SE-16 candidates only)
-- api.electiondata.my/v1/{parties,coalitions}/{uid}/Johor-dun.json uploaded to R2 (SE-16 parties only)
-- api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2 (56 Johor duns only)
-- api.electiondata.my/v1/elections/Johor/SE-16-*.json uploaded to R2
-- api.electiondata.my/v1/results/{seat}/2026-07-11.json copied to R2 (56 files)
+- api.electiondata.my/v1/{parties,coalitions}/{uid}/Negeri Sembilan-dun.json uploaded to R2 (SE-16 parties only)
+- api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2 (36 Negeri Sembilan duns only)
+- api.electiondata.my/v1/elections/Negeri Sembilan/SE-16-*.json uploaded to R2
+- api.electiondata.my/v1/results/{seat}/2026-08-01.json copied to R2 (36 files)
 """
 
 import os
@@ -74,20 +74,20 @@ from api_seats_current import (
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 
-DATE = "2026-07-11"
+DATE = "2026-08-01"
 ELECTION = "SE-16"
-STATE = "Johor"
+STATE = "Negeri Sembilan"
 
 
 def get_se16_scope():
-    """Resolve everything contesting Johor SE-16 from the consolidated ballots.
+    """Resolve everything contesting Negeri Sembilan SE-16 from the consolidated ballots.
 
     Party and coalition uids are normalised the same way api_parties.py does it (the
     numeric prefix is the stable key), because that is the uid the API folders use.
 
     Returns:
         dict with keys: candidates (uids), parties (uids), coalitions (uids),
-        seats (slugs, as used by the seats API), seat_names ("N.01 Buloh Kasap, Johor",
+        seats (slugs, as used by the seats API), seat_names ("N.01 Chennah, Negeri Sembilan",
         as used by the results paths)
     """
     df = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}consol_ballots.parquet")
@@ -119,7 +119,7 @@ def get_se16_scope():
         "seat_names": sorted({f"{s}, {STATE}" for s in df.seat.unique()}),
     }
     print(
-        f"\nJohor SE-16 scope: {len(scope['candidates'])} candidates, "
+        f"\n{STATE} {ELECTION} scope: {len(scope['candidates'])} candidates, "
         f"{len(scope['parties'])} parties, {len(scope['coalitions'])} coalitions, "
         f"{len(scope['seats'])} seats"
     )
@@ -169,7 +169,7 @@ def purge_results_se16():
     """Purge the Cloudflare cache for the whole internal results prefix.
 
     Purged by prefix rather than by key: results keys carry the raw seat name
-    ("results/N.19 Yong Peng, Johor/..."), so a URL purge would send unencoded spaces
+    ("results/N.01 Chennah, Negeri Sembilan/..."), so a URL purge would send unencoded spaces
     and commas and miss the percent-encoded key Cloudflare actually caches.
     """
     purge_results_cache()
@@ -189,7 +189,7 @@ def duplicate_results_se16(client, source_bucket, dest_bucket, keys):
 def upload_api_parties_se16(client, bucket, parties, coalitions):
     """Upload the API party/coalition files touched by SE-16.
 
-    SE-16 rows only land in the Johor x dun slice, so only those files change —
+    SE-16 rows only land in the Negeri Sembilan x dun slice, so only those files change —
     plus the dropdown, which gains any party contesting for the first time.
     """
     files = (
@@ -204,7 +204,7 @@ def upload_api_parties_se16(client, bucket, parties, coalitions):
 
 
 def upload_api_seats_se16(client, bucket, seats):
-    """Upload the API seat files for the 56 Johor duns, plus the dropdown."""
+    """Upload the API seat files for the 36 Negeri Sembilan duns, plus the dropdown."""
     files = [f"{PATH_API_SEATS}dropdown.json"]
     for slug in seats:
         files += [f"{PATH_API_SEATS}{slug}.json", f"{PATH_API_SEATS}{slug}-lineage.json"]
@@ -215,7 +215,7 @@ def upload_api_seats_se16(client, bucket, seats):
 
 
 def upload_api_election_se16(client, bucket):
-    """Upload the API election files for Johor SE-16 only."""
+    """Upload the API election files for Negeri Sembilan SE-16 only."""
     files = [
         f"{PATH_API_ELECTIONS}{STATE}/{ELECTION}-{c}.json"
         for c in ["by_party", "by_seat", "stats"]
@@ -266,7 +266,7 @@ if __name__ == "__main__":
     upload_results_se16(CLIENT, BUCKET_INTERNAL, RESULT_KEYS)
     purge_results_se16()
 
-    # ----- api: Johor SE-16 only -----
+    # ----- api: Negeri Sembilan SE-16 only -----
     make_api_candidates_jsons(SCOPE["candidates"])
     upload_api_candidates_jsons(CLIENT, BUCKET_API, SCOPE["candidates"])
 
@@ -279,7 +279,7 @@ if __name__ == "__main__":
     upload_api_election_se16(CLIENT, BUCKET_API)
     sync_dropdown_json_to_api(CLIENT, BUCKET_API)
 
-    # the 56 SE-16 results files, copied from the internal bucket into v1/
+    # the 36 SE-16 results files, copied from the internal bucket into v1/
     duplicate_results_se16(CLIENT, BUCKET_INTERNAL, BUCKET_API, RESULT_KEYS)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
