@@ -62,6 +62,8 @@ def _build_catalogue(template, entry):
     cat = json.loads(cat_str)
 
     cat["data_as_of"] = entry["data_as_of"]
+    # Data before the 2026-07-11 refresh was actually last updated on 2026-06-24
+    cat["last_updated"] = "2026-06-24" if entry["data_as_of"] < "2026-07-11" else entry["data_as_of"]
 
     for fmt, ext in FORMAT_EXTS.items():
         fp = RESULTS_DIR / (stem + ext)
