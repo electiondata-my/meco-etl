@@ -8,11 +8,16 @@ It:
 - Regenerates and uploads the internal results files for the SE-16 polling date only
 - Derives the SE-16 contestants (candidates, parties, coalitions, seats) from consol_ballots
 - Uploads to the API bucket only: the SE-16 candidates, their parties/coalitions (Negeri Sembilan-dun), the 36 Negeri Sembilan duns, the Negeri Sembilan SE-16 election, and the 36 SE-16 results files
+- Regenerates and uploads the lake headline files touched by SE-16 (headline_{ballots,stats} and their state_nsn slices)
+- Refreshes data_as_of in the catalogue index for those datasets, rebuilds their catalogue JSONs, and uploads both
 
 Inputs:
 - {PATH_RESULTS_HEADLINE}consol_ballots.parquet
+- {PATH_RESULTS_HEADLINE}consol_stats.parquet
 - {PATH_RESULTS_HEADLINE}lookup_party.parquet
 - {PATH_RESULTS_HEADLINE}lookup_coalition.parquet
+- template-catalogue/headline-{ballots,stats}.json
+- internal.electiondata.my/catalogue/index.json
 
 Outputs:
 - internal.electiondata.my/{candidates,parties,seats/current}/{dropdown,all}.json uploaded to R2
@@ -23,15 +28,25 @@ Outputs:
 - api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2 (36 Negeri Sembilan duns only)
 - api.electiondata.my/v1/elections/Negeri Sembilan/SE-16-*.json uploaded to R2
 - api.electiondata.my/v1/results/{seat}/2026-08-01.json copied to R2 (36 files)
+- lake.electiondata.my/results_headline/headline_{ballots,stats}[_state_nsn].{csv,parquet,xlsx} uploaded to R2
+- internal.electiondata.my/catalogue/{index,headline-*}.json uploaded to R2
 """
 
 import os
+import json
+from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import generate_slug, get_r2_client, upload_bulk, purge_cf_cache
+from helper import (
+    generate_slug,
+    get_r2_client,
+    upload_bulk,
+    purge_cf_cache,
+    write_csv_parquet_excel,
+)
 
 from api_candidates import (
     make_candidates_df,
@@ -70,13 +85,28 @@ from api_seats_current import (
     make_seats_api,
     PATH_LOCAL_API as PATH_API_SEATS,
 )
+from api_catalogue_results_headline import (
+    _build_catalogue,
+    TEMPLATE_DIR,
+    purge_catalogue_results_headline_cache,
+)
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
+PATH_LOCAL_LAKE = "lake.electiondata.my/"
 
 DATE = "2026-08-01"
 ELECTION = "SE-16"
 STATE = "Negeri Sembilan"
+STATE_CODE = "nsn"
+
+# the catalogue datasets whose underlying data changes with this election
+HEADLINE_IDS = [
+    "headline-ballots",
+    "headline-stats",
+    f"headline-ballots-state-{STATE_CODE}",
+    f"headline-stats-state-{STATE_CODE}",
+]
 
 
 def get_se16_scope():
@@ -226,6 +256,78 @@ def upload_api_election_se16(client, bucket):
     upload_bulk(client, bucket, files_to_upload, max_workers=120)
 
 
+def make_lake_headline_se16():
+    """Regenerate the lake headline files touched by SE-16.
+
+    lake_results_headline.py rewrites every slice; SE-16 rows only land in the
+    full files and the Negeri Sembilan state slice, so only those are rebuilt.
+    """
+    for v in ["ballots", "stats"]:
+        df = pd.read_parquet(f"{PATH_RESULTS_HEADLINE}consol_{v}.parquet")
+        write_csv_parquet_excel(f"{PATH_LOCAL_LAKE}results_headline/headline_{v}", df)
+        write_csv_parquet_excel(
+            f"{PATH_LOCAL_LAKE}results_headline/headline_{v}_state_{STATE_CODE}",
+            df[(df.state == STATE) & (df.election.str.startswith("SE-"))],
+        )
+
+
+def upload_lake_headline_se16(client, bucket):
+    """Upload the SE-16 lake headline files to R2 meco-lake."""
+    for ext, content_type in [
+        ("csv", "text/csv"),
+        ("parquet", "application/octet-stream"),
+        ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    ]:
+        files = [
+            f"{PATH_LOCAL_LAKE}results_headline/{i.replace('-', '_')}.{ext}"
+            for i in HEADLINE_IDS
+        ]
+        print(f"\nUploading {len(files):,.0f} {ext.upper()} files to R2")
+        files_to_upload = [(f, f.replace(PATH_LOCAL_LAKE, "")) for f in files]
+        upload_bulk(client, bucket, files_to_upload, content_type=content_type)
+
+
+def make_catalogue_headline_se16():
+    """Refresh data_as_of in the catalogue index and rebuild the SE-16 catalogue JSONs."""
+    index_path = Path(f"{PATH_LOCAL_INTERNAL}catalogue/index.json")
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    entries = [
+        e for e in index["data"]["Results"]["Constituency-Level"] if e["id"] in HEADLINE_IDS
+    ]
+    for entry in entries:
+        entry["data_as_of"] = DATE
+    index_path.write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    print(f"\nSet data_as_of = {DATE} for {len(entries)} catalogue index entries")
+
+    templates = {
+        "ballots": json.loads((TEMPLATE_DIR / "headline-ballots.json").read_text()),
+        "stats": json.loads((TEMPLATE_DIR / "headline-stats.json").read_text()),
+    }
+    out_dir = Path(PATH_LOCAL_INTERNAL) / "catalogue" / "results_headline"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for entry in entries:
+        template_key = "stats" if "stats" in entry["id"] else "ballots"
+        cat = _build_catalogue(templates[template_key], entry)
+        out_path = out_dir / f"{entry['id']}.json"
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(cat, f, ensure_ascii=False)
+        print(f"Written: {out_path}")
+
+
+def upload_catalogue_headline_se16(client, bucket):
+    """Upload the SE-16 catalogue JSONs and the index to the internal bucket."""
+    files_to_upload = sorted(
+        [
+            (f"{PATH_LOCAL_INTERNAL}catalogue/results_headline/{i}.json", f"catalogue/{i}.json")
+            for i in HEADLINE_IDS
+        ]
+    ) + [(f"{PATH_LOCAL_INTERNAL}catalogue/index.json", "catalogue/index.json")]
+    print(f"\nUploading {len(files_to_upload):,.0f} catalogue files to R2")
+    upload_bulk(client, bucket, files_to_upload, max_workers=120)
+
+
 if __name__ == "__main__":
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
@@ -281,6 +383,15 @@ if __name__ == "__main__":
 
     # the 36 SE-16 results files, copied from the internal bucket into v1/
     duplicate_results_se16(CLIENT, BUCKET_INTERNAL, BUCKET_API, RESULT_KEYS)
+
+    # ----- lake + catalogue: headline files touched by SE-16 only -----
+    BUCKET_LAKE = os.getenv("R2_BUCKET_LAKE")
+    make_lake_headline_se16()
+    upload_lake_headline_se16(CLIENT, BUCKET_LAKE)
+
+    make_catalogue_headline_se16()
+    upload_catalogue_headline_se16(CLIENT, BUCKET_INTERNAL)
+    purge_catalogue_results_headline_cache()
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"\nDuration: {datetime.now() - START}\n")
