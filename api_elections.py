@@ -66,8 +66,9 @@ def make_election_stats():
     col_idx = ["type","election_name","state"]
     col_summary = [
         "voters_total", "n_candidates",
-        "voter_turnout", "voter_turnout_perc", 
-        "votes_valid", "votes_rejected", "votes_rejected_perc", 
+        "voter_turnout", "voter_turnout_perc",
+        "ballots_not_returned", "ballots_not_returned_perc",
+        "votes_valid", "votes_rejected", "votes_rejected_perc",
     ]
     # fmt: on
 
@@ -106,6 +107,8 @@ def make_election_stats():
         ignore_index=True,
     )
     df["voter_turnout_perc"] = df.voter_turnout / df.voters_total * 100
+    # denominator is ballots issued, i.e. voter_turnout as a count
+    df["ballots_not_returned_perc"] = df.ballots_not_returned / df.voter_turnout * 100
     # denominator is ballots returned, which votes_valid + votes_rejected reconstructs
     df["votes_rejected_perc"] = df.votes_rejected / (df.votes_valid + df.votes_rejected) * 100
     df = df.sort_values(by=["type", "state", "election_name"], ascending=[False, True, True])
@@ -139,6 +142,7 @@ def make_elections_by_seat():
         "date", "election_name", "type",
         "party", "party_uid", "coalition", "coalition_uid", "name",
         "voters_total", "voter_turnout", "voter_turnout_perc",
+        "ballots_not_returned", "ballots_not_returned_perc",
         "majority", "majority_perc", "votes_valid", "votes_rejected", "votes_rejected_perc",
     ]
     # fmt: on
@@ -188,6 +192,8 @@ def make_elections_jsons():
             "voters_total",
             "voter_turnout",
             "voter_turnout_perc",
+            "ballots_not_returned",
+            "ballots_not_returned_perc",
             "votes_valid",
             "votes_rejected",
             "votes_rejected_perc",
@@ -210,6 +216,8 @@ def make_elections_jsons():
             "voters_total",
             "voter_turnout",
             "voter_turnout_perc",
+            "ballots_not_returned",
+            "ballots_not_returned_perc",
             "majority",
             "majority_perc",
             "votes_valid",
@@ -398,6 +406,8 @@ def make_byelections_json():
         "voters_total",
         "voter_turnout",
         "voter_turnout_perc",
+        "ballots_not_returned",
+        "ballots_not_returned_perc",
         "votes_valid",
         "votes_rejected",
         "votes_rejected_perc",

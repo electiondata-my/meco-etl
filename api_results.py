@@ -75,7 +75,7 @@ def make_results(uids=None):
 
     # fmt: off
     col_api_ballot = ["name", "party_uid", "party", "coalition_uid", "coalition", "votes", "votes_perc", "result"]
-    col_api_stats = ["date", "voters_total", "voters_total_v_avg", "voter_turnout", "voter_turnout_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
+    col_api_stats = ["date", "voters_total", "voters_total_v_avg", "voter_turnout", "voter_turnout_perc", "ballots_not_returned", "ballots_not_returned_perc", "votes_rejected", "votes_rejected_perc", "majority", "majority_perc"]
     # fmt: on
 
     df = pd.read_parquet(f"{PATH_LOCAL_INTERNAL}candidates.parquet")
