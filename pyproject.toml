@@ -19,4 +19,5 @@ dependencies = [
     "ipywidgets>=8.1.8",
     "jinja2>=3.1.6",
     "playwright>=1.61.0",
+    "mapbox>=0.18.1",
 ]

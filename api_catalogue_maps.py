@@ -49,10 +49,13 @@ REGION_DISPLAY = {
 # boundaries. The catalogue entry itself stays unsuffixed, so the file stem and
 # the catalogue slug are tracked separately throughout; the stem drives download
 # links, file sizes and the mapbox key, the slug drives the output filename.
+# Proposals also carry their own last_updated, since they are published off-cycle
+# from the gazetted archives whose dates the templates hold.
 PROPOSALS = {
     "sarawak-2026-parlimen": {
         "stem": "sarawak_2026_parlimen_p1",
         "level": "parlimen",
+        "last_updated": "2026-09-03",
         "title": "2026 Delimitation of Sarawak (Parliament): 1st Proposal",
         "description": (
             "Boundaries of parliamentary constituencies in Sarawak as proposed in the 1st "
@@ -63,6 +66,7 @@ PROPOSALS = {
     "sarawak-2026-dun": {
         "stem": "sarawak_2026_dun_p1",
         "level": "dun",
+        "last_updated": "2026-09-03",
         "title": "2026 Delimitation of Sarawak (DUN): 1st Proposal",
         "description": (
             "Boundaries of DUN constituencies in Sarawak as proposed in the 1st public "
@@ -73,6 +77,7 @@ PROPOSALS = {
     "sarawak-2026-dm": {
         "stem": "sarawak_2026_dm_p1",
         "level": "dm",
+        "last_updated": "2026-09-03",
         "title": "2026 Subdivision of Sarawak (Voting Districts): 1st Proposal",
         "description": (
             "Boundaries of voting districts in Sarawak as proposed in the 1st public "
@@ -211,6 +216,7 @@ def _build_catalogue(template, slug, stem, level):
     if slug in PROPOSALS:
         cat["title"] = PROPOSALS[slug]["title"]
         cat["description"] = PROPOSALS[slug]["description"]
+        cat["last_updated"] = PROPOSALS[slug]["last_updated"]
 
     if "voters_total" in data_cols:
         cat["fields"].append(FIELD_VOTERS_TOTAL)
