@@ -11,6 +11,7 @@ Inputs:
 - PATH_MAPS_DELIMS/*.parquet (geoparquet delimitation files)
 - PATH_MAPS/ (all format variants: geojson, topojson, geoparquet, fgb, kml)
 - PATH_MAPS_SUBDIVISIONS/*.parquet (geoparquet subdivision files, all formats flat)
+- lake.electiondata.my/maps/ (staged files for exercises still at proposal stage)
 
 Outputs:
 - api.electiondata.my/catalogue/maps/delimitations/{region}_{year}_{type}.json
@@ -32,6 +33,7 @@ PATH_MAPS = Path(os.getenv("PATH_MAPS"))
 PATH_MAPS_DELIMS = Path(os.getenv("PATH_MAPS_DELIMS"))
 PATH_MAPS_SUBDIVISIONS = Path(os.getenv("PATH_MAPS_SUBDIVISIONS"))
 PATH_LOCAL_INTERNAL = "internal.electiondata.my/"
+PATH_LOCAL_LAKE = Path("lake.electiondata.my/maps")
 TEMPLATE_DIR = Path("template-catalogue")
 TODAY = date.today().isoformat()
 
@@ -39,6 +41,58 @@ REGION_DISPLAY = {
     "peninsular": "Peninsular Malaysia",
     "sabah": "Sabah",
     "sarawak": "Sarawak",
+}
+
+# Exercises still at the public display stage are published with a proposal
+# suffix on the filename (p1 = 1st proposal), and are staged under
+# lake.electiondata.my/ rather than the map archives, which hold only gazetted
+# boundaries. The catalogue entry itself stays unsuffixed, so the file stem and
+# the catalogue slug are tracked separately throughout; the stem drives download
+# links, file sizes and the mapbox key, the slug drives the output filename.
+PROPOSALS = {
+    "sarawak-2026-parlimen": {
+        "stem": "sarawak_2026_parlimen_p1",
+        "level": "parlimen",
+        "title": "2026 Delimitation of Sarawak (Parliament): 1st Proposal",
+        "description": (
+            "Boundaries of parliamentary constituencies in Sarawak as proposed in the 1st "
+            "public display (Pameran 1) of the 2026 delimitation exercise. These boundaries "
+            "are not yet gazetted, and may change before the exercise is concluded."
+        ),
+    },
+    "sarawak-2026-dun": {
+        "stem": "sarawak_2026_dun_p1",
+        "level": "dun",
+        "title": "2026 Delimitation of Sarawak (DUN): 1st Proposal",
+        "description": (
+            "Boundaries of DUN constituencies in Sarawak as proposed in the 1st public "
+            "display (Pameran 1) of the 2026 delimitation exercise. These boundaries are "
+            "not yet gazetted, and may change before the exercise is concluded."
+        ),
+    },
+    "sarawak-2026-dm": {
+        "stem": "sarawak_2026_dm_p1",
+        "level": "dm",
+        "title": "2026 Subdivision of Sarawak (Voting Districts): 1st Proposal",
+        "description": (
+            "Boundaries of voting districts in Sarawak as proposed in the 1st public "
+            "display (Pameran 1) of the 2026 delimitation and accompanying subdivision "
+            "exercise. These boundaries are not yet gazetted, and may change before the "
+            "exercise is concluded."
+        ),
+    },
+}
+
+PROPOSAL_STEMS = {spec["stem"] for spec in PROPOSALS.values()}
+
+# Only the proposal files carry the electorate, as stated in the public display.
+FIELD_VOTERS_TOTAL = {
+    "name": "voters_total",
+    "title": "Total Voters",
+    "description": (
+        "[Integer] Number of registered voters in the constituency as stated in the EC's "
+        "public display, e.g. 34197"
+    ),
 }
 
 REGION_MAP_DISPLAY_DELIMS = {
@@ -97,121 +151,116 @@ FORMAT_EXTS_SUBDIVS = {
 }
 
 
-def _get_file_size(stem, fmt):
-    ext, subdir = FORMAT_EXTS_DELIMS[fmt]
-    fp = PATH_MAPS / subdir / (stem + ext)
-    return fp.stat().st_size if fp.exists() else None
+def _map_path(stem, level, fmt):
+    """Path to a map file on disk, staged lake dir for proposals, archive otherwise."""
+    if level == "dm":
+        ext = FORMAT_EXTS_SUBDIVS[fmt]
+        archive = PATH_MAPS_SUBDIVISIONS / f"{stem}{ext}"
+        kind = "subdivisions"
+    else:
+        ext, subdir = FORMAT_EXTS_DELIMS[fmt]
+        archive = PATH_MAPS / subdir / f"{stem}{ext}"
+        kind = "delimitations"
+
+    if stem in PROPOSAL_STEMS:
+        return PATH_LOCAL_LAKE / kind / f"{stem}{ext}"
+    return archive
 
 
-def _build_catalogue(template, stem, region, year):
-    """Return a filled-in catalogue dict for a single delimitation file."""
-    gdf = gpd.read_parquet(PATH_MAPS_DELIMS / f"{stem}.parquet")
+def _catalogue_targets(level):
+    """{slug: stem} for a level; proposals override the gazetted file of the same slug."""
+    root = PATH_MAPS_SUBDIVISIONS if level == "dm" else PATH_MAPS_DELIMS
+    targets = {}
+
+    for fp in sorted(g(str(root / f"*_{level}.parquet"))):
+        stem = Path(fp).stem
+        region, year = stem.split("_")[:2]
+        targets[f"{region}-{year}-{level}"] = stem
+
+    for slug, spec in PROPOSALS.items():
+        if spec["level"] == level:
+            targets[slug] = spec["stem"]
+
+    return targets
+
+
+def _build_catalogue(template, slug, stem, level):
+    """Return a filled-in catalogue dict for a single map file."""
+    region, year = slug.split("-")[:2]
+    kind = "subdivisions" if level == "dm" else "delimitations"
+    exts = (
+        FORMAT_EXTS_SUBDIVS
+        if level == "dm"
+        else {fmt: ext for fmt, (ext, _) in FORMAT_EXTS_DELIMS.items()}
+    )
+    display = REGION_MAP_DISPLAY_SUBDIVS if level == "dm" else REGION_MAP_DISPLAY_DELIMS
+
+    gdf = gpd.read_parquet(_map_path(stem, level, "geoparquet"))
     n_objects = len(gdf)
     data_cols = [c for c in gdf.columns if c != "geometry"]
     n_attributes = len(data_cols)
     sample_rows = gdf[data_cols].to_dict(orient="records")
 
     cat_str = json.dumps(template)
-    cat_str = cat_str.replace("YYYY", str(year))
+    cat_str = cat_str.replace("YYYY", year)
     cat_str = cat_str.replace("UNIT", REGION_DISPLAY[region])
     cat = json.loads(cat_str)
 
-    cat["data_as_of"] = str(year)
+    cat["data_as_of"] = year
 
-    base_url = f"https://lake.electiondata.my/maps/delimitations/{stem}"
-    for fmt, (ext, _) in FORMAT_EXTS_DELIMS.items():
+    if slug in PROPOSALS:
+        cat["title"] = PROPOSALS[slug]["title"]
+        cat["description"] = PROPOSALS[slug]["description"]
+
+    if "voters_total" in data_cols:
+        cat["fields"].append(FIELD_VOTERS_TOTAL)
+
+    base_url = f"https://lake.electiondata.my/maps/{kind}/{stem}"
+    for fmt, ext in exts.items():
         cat["download"][fmt]["link"] = f"{base_url}{ext}"
         cat["download"][fmt]["n_objects"] = n_objects
         cat["download"][fmt]["n_attributes"] = n_attributes
-        size = _get_file_size(stem, fmt)
-        if size is not None:
-            cat["download"][fmt]["size_bytes"] = size
+        size_path = _map_path(stem, level, fmt)
+        if size_path.exists():
+            cat["download"][fmt]["size_bytes"] = size_path.stat().st_size
 
     map_opts = cat["display_options"]["map"]
     map_opts["mapbox_key"] = stem
-    map_opts["zoom"] = REGION_MAP_DISPLAY_DELIMS[region]["zoom"]
-    map_opts["center"] = REGION_MAP_DISPLAY_DELIMS[region]["center"]
+    map_opts["zoom"] = display[region]["zoom"]
+    map_opts["center"] = display[region]["center"]
 
     cat["sample_data"] = sample_rows
 
     return cat
 
 
-def make_delims_parlimen():
-    """Generate catalogue JSONs for all parlimen delimitation files."""
-    template = json.loads((TEMPLATE_DIR / "unit-yyyy-parlimen.json").read_text())
+def _make_level(level, template_name):
+    """Generate catalogue JSONs for every dataset at a given map level."""
+    template = json.loads((TEMPLATE_DIR / template_name).read_text())
     out_dir = Path(PATH_LOCAL_INTERNAL) / "catalogue" / "maps"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    for fp in sorted(g(str(PATH_MAPS_DELIMS / "*_parlimen.parquet"))):
-        stem = Path(fp).stem
-        region, year = stem.split("_")[:2]
-        cat = _build_catalogue(template, stem, region, int(year))
-        out_path = out_dir / f"{region}-{year}-parlimen.json"
+    for slug, stem in sorted(_catalogue_targets(level).items()):
+        cat = _build_catalogue(template, slug, stem, level)
+        out_path = out_dir / f"{slug}.json"
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(cat, f, ensure_ascii=False)
         print(f"Written: {out_path}")
+
+
+def make_delims_parlimen():
+    """Generate catalogue JSONs for all parlimen delimitation files."""
+    _make_level("parlimen", "unit-yyyy-parlimen.json")
 
 
 def make_delims_dun():
     """Generate catalogue JSONs for all DUN delimitation files."""
-    template = json.loads((TEMPLATE_DIR / "unit-yyyy-dun.json").read_text())
-    out_dir = Path(PATH_LOCAL_INTERNAL) / "catalogue" / "maps"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    for fp in sorted(g(str(PATH_MAPS_DELIMS / "*_dun.parquet"))):
-        stem = Path(fp).stem
-        region, year = stem.split("_")[:2]
-        cat = _build_catalogue(template, stem, region, int(year))
-        out_path = out_dir / f"{region}-{year}-dun.json"
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(cat, f, ensure_ascii=False)
-        print(f"Written: {out_path}")
+    _make_level("dun", "unit-yyyy-dun.json")
 
 
 def make_subdivisions_dm():
     """Generate catalogue JSONs for all DM subdivision files."""
-    template = json.loads((TEMPLATE_DIR / "unit-yyyy-dm.json").read_text())
-    out_dir = Path(PATH_LOCAL_INTERNAL) / "catalogue" / "maps"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    for fp in sorted(g(str(PATH_MAPS_SUBDIVISIONS / "*_dm.parquet"))):
-        stem = Path(fp).stem
-        region, year = stem.split("_")[:2]
-
-        gdf = gpd.read_parquet(fp)
-        n_objects = len(gdf)
-        data_cols = [c for c in gdf.columns if c != "geometry"]
-        n_attributes = len(data_cols)
-        sample_rows = gdf[data_cols].to_dict(orient="records")
-
-        cat_str = json.dumps(template)
-        cat_str = cat_str.replace("YYYY", str(year))
-        cat_str = cat_str.replace("UNIT", REGION_DISPLAY[region])
-        cat = json.loads(cat_str)
-
-        cat["data_as_of"] = str(year)
-
-        base_url = f"https://lake.electiondata.my/maps/subdivisions/{stem}"
-        for fmt, ext in FORMAT_EXTS_SUBDIVS.items():
-            cat["download"][fmt]["link"] = f"{base_url}{ext}"
-            cat["download"][fmt]["n_objects"] = n_objects
-            cat["download"][fmt]["n_attributes"] = n_attributes
-            size_path = PATH_MAPS_SUBDIVISIONS / f"{stem}{ext}"
-            if size_path.exists():
-                cat["download"][fmt]["size_bytes"] = size_path.stat().st_size
-
-        map_opts = cat["display_options"]["map"]
-        map_opts["mapbox_key"] = stem
-        map_opts["zoom"] = REGION_MAP_DISPLAY_SUBDIVS[region]["zoom"]
-        map_opts["center"] = REGION_MAP_DISPLAY_SUBDIVS[region]["center"]
-
-        cat["sample_data"] = sample_rows
-
-        out_path = out_dir / f"{region}-{year}-dm.json"
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(cat, f, ensure_ascii=False)
-        print(f"Written: {out_path}")
+    _make_level("dm", "unit-yyyy-dm.json")
 
 
 def upload_catalogue_maps(client, bucket, file_pattern="catalogue/maps/*"):

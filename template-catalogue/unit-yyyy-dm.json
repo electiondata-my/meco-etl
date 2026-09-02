@@ -60,7 +60,7 @@
             "description": "[String] Code (N.xx) and name of the DUN constituency, e.g. 'N.01 Titi Tinggi'"
         },
         {
-            "name": "code_dm",
+            "name": "code_dun",
             "title": "DUN Code",
             "description": "[String] Official code of the DUN constituency, e.g. 'N.01'"
         },
