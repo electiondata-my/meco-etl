@@ -239,6 +239,7 @@ def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
             f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache",
             headers={"Authorization": f"Bearer {api_token}"},
             json={"files": batch},
+            timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()
@@ -317,6 +318,7 @@ def purge_cf_cache_prefix(prefixes: list[str]) -> None:
             f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache",
             headers={"Authorization": f"Bearer {api_token}"},
             json={"prefixes": batch},
+            timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()

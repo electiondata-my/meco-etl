@@ -48,6 +48,7 @@ def check_combo(party_type, uid, state, election_type):
 
 
 def main(sample=None):
+    """Run the parties API checks and write a summary."""
     _, dropdown, err = fetch_json("/parties/dropdown")
     if err or not dropdown.get("data"):
         return write_summary("parties", 1, [{"id": "dropdown", "error": err or "empty dropdown"}], 0)

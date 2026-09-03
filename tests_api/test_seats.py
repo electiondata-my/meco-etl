@@ -49,6 +49,7 @@ def check_seat_lineage(slug):
 
 
 def main(sample=None):
+    """Run the seats API checks and write a summary."""
     _, dropdown, err = fetch_json("/seats/dropdown")
     if err or not dropdown.get("seats"):
         return write_summary("seats", 1, [{"id": "dropdown", "error": err or "empty dropdown"}], 0)

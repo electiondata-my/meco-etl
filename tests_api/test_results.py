@@ -49,6 +49,7 @@ def check_contest(seat, state, date):
 
 
 def main(sample=None):
+    """Run the results API checks and write a summary."""
     if not RESULTS_DIR.is_dir():
         return write_summary(
             "results", 1,

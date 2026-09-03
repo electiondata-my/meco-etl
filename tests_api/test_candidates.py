@@ -49,6 +49,7 @@ def check_candidate(cand):
 
 
 def main(sample=None):
+    """Run the candidates API checks and write a summary."""
     _, dropdown, err = fetch_json("/candidates/dropdown")
     if err or not dropdown.get("candidates"):
         return write_summary("candidates", 1, [{"id": "dropdown", "error": err or "empty dropdown"}], 0)

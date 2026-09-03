@@ -46,6 +46,7 @@ SUITES = [
 
 
 def main(sample=None):
+    """Run every API test suite and write a combined summary."""
     started = datetime.now(timezone.utc)
     summaries = [suite.main(sample) for suite in SUITES]
 

@@ -35,7 +35,12 @@ def check_byelections():
     return None
 
 
-def main(sample=None):
+def main(sample=None):  # pylint: disable=unused-argument
+    """Run the byelections API checks and write a summary.
+
+    Takes `sample` for a uniform suite interface; this suite is a single
+    check, so there is nothing to sample.
+    """
     checks = [("byelections", check_byelections)]
     total, failures, duration = run_checks(checks, "byelections")
     return write_summary("byelections", total, failures, duration)

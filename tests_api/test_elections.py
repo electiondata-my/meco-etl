@@ -34,6 +34,7 @@ def check_view(state, election, view):
 
 
 def main(sample=None):
+    """Run the elections API checks and write a summary."""
     _, dropdown, err = fetch_json("/elections/dropdown")
     if err or not dropdown.get("elections"):
         return write_summary("elections", 1, [{"id": "dropdown", "error": err or "empty dropdown"}], 0)
