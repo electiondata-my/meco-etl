@@ -3,8 +3,8 @@ Module: api_catalogue_results_saluran.py
 
 Generates CSV/Excel exports and catalogue JSON files for saluran-level results datasets.
 It:
-- Reads all saluran parquet files and writes CSV and Excel versions
-- Uploads all saluran files (parquet, csv, xlsx) to the lake R2 bucket
+- Reads all saluran parquet files and writes CSV and versions
+- Uploads all saluran files (parquet, csv) to the lake R2 bucket
 - Reads catalogue index to get all Saluran-Level dataset entries
 - Fills saluran-ballots or saluran-stats template per entry
 - Uploads all catalogue JSONs to the internal R2 bucket and purges the CF cache
@@ -16,7 +16,7 @@ Inputs:
 - lake.electiondata.my/results_saluran/*.parquet
 
 Outputs:
-- lake.electiondata.my/results_saluran/*.{csv,xlsx} uploaded to R2
+- lake.electiondata.my/results_saluran/*.csv uploaded to R2
 - internal.electiondata.my/catalogue/results_saluran/{id}.json uploaded to R2
 """
 
@@ -40,8 +40,19 @@ FORMAT_EXTS = {"parquet": ".parquet", "csv": ".csv"}
 
 SALURAN_LEVELS = [
     "Saluran-Level (Federal)",
+    "Saluran-Level (Perlis State)",
+    "Saluran-Level (Kedah State)",
+    "Saluran-Level (Kelantan State)",
+    "Saluran-Level (T'ganu State)",
+    "Saluran-Level (Penang State)",
+    "Saluran-Level (Perak State)",
+    "Saluran-Level (Pahang State)",
+    "Saluran-Level (Selangor State)",
     "Saluran-Level (N9 State)",
+    "Saluran-Level (Melaka State)",
     "Saluran-Level (Johor State)",
+    "Saluran-Level (Sabah State)",
+    "Saluran-Level (Sarawak State)",
 ]
 
 

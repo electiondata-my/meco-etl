@@ -2,7 +2,7 @@
     "catalogue_type": "TABLE",
     "title": "TITLE",
     "data_as_of": "yyyy-mm-dd",
-    "last_updated": "2026-06-23",
+    "last_updated": "2026-09-28",
     "next_update": "—",
     "download": {
         "parquet": {
@@ -19,7 +19,7 @@
         }
     },
     "description": "DESCRIPTION.",
-    "methodology": "This dataset was compiled from official Saluran-level results released by the Election Commission of Malaysia (EC). Since the EC does not publish Saluran-level results (Form 14) openly, the data had to be acquired in PDF format from various stakeholders who legally obtained the data, either directly from the EC or via agents at polling stations. Following acquisition, the dataset was produced by scraping, standardising, and validating the data for publication on ElectionData.MY. In particular, we ensured that any aggregation of the Saluran-level results results in a perfect match against official constituency-level results. An academic paper (preprint) documenting the full technical details on how this dataset was built and validated will be available by mid-July 2026.",
+    "methodology": "This dataset was compiled from official Saluran-level results released by the Election Commission of Malaysia (EC). Since the EC does not publish Saluran-level results (Form 14) openly, the data had to be acquired in PDF format from various stakeholders who legally obtained the data, either directly from the EC or via agents at polling stations. Following acquisition, the dataset was produced by scraping, standardising, and validating the data for publication on ElectionData.MY. In particular, we ensured that any aggregation of the Saluran-level results results in a perfect match against official constituency-level results. An academic paper (preprint) documenting the full technical details on how this dataset was built and validated will be available by mid-Oct 2026.",
     "fields": [
         {
             "name": "date",
@@ -98,13 +98,13 @@
         }
     ],
     "cite": {
-        "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan (2026). The citation will be updated in mid-July when a new preprint is published.",
+        "instructions": "Users wishing to reference this dataset in an academic context should (for now) cite Thevananthan (2026). The citation will be updated in mid-Oct when a new preprint is published.",
         "type": "misc",
         "id": "electiondatamy2026",
         "title": "Saluran-Level Election Results",
         "author": "Thevananthan, Thevesh",
         "journal": "ElectionData.MY",
-        "date": "2026-06-23"
+        "date": "2026-09-28"
     },
     "display_options": {
         "precision": {

@@ -40,8 +40,16 @@ FORMAT_EXTS = {"parquet": ".parquet", "csv": ".csv"}
 
 VR_LEVELS = [
     "Federal Elections",
+    "Kedah State Elections",
+    "Kelantan State Elections",
+    "Trg State Elections",
+    "Penang State Elections",
+    "Selangor State Elections",
     "N9 State Elections",
+    "Melaka State Elections",
     "Johor State Elections",
+    "Sabah State Elections",
+    "Sarawak State Elections",
 ]
 
 
