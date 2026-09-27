@@ -6,6 +6,9 @@ CLAUDE.md
 # deliberately local only
 api.electiondata.my/*
 internal.electiondata.my/*
+!internal.electiondata.my/catalogue/
+internal.electiondata.my/catalogue/*
+!internal.electiondata.my/catalogue/index.json
 lake.electiondata.my/*
 analysis*.py
 output/*

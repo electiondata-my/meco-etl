@@ -1,0 +1,830 @@
+{
+    "data": {
+        "Results": {
+            "Constituency-Level": [
+                {
+                    "id": "headline-ballots",
+                    "title": "All Elections: Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every contest from 1955-present.",
+                    "data_as_of": "2026-08-01"
+                },
+                {
+                    "id": "headline-stats",
+                    "title": "All Elections: Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every contest from 1955-present.",
+                    "data_as_of": "2026-08-01"
+                },
+                {
+                    "id": "headline-ballots-federal",
+                    "title": "Parliamentary Elections (PRU): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every federal contest from 1955-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-stats-federal",
+                    "title": "Parliamentary Elections (PRU): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every federal contest from 1955-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-ballots-state-pls",
+                    "title": "Perlis DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Perlis state contest from 1959-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-stats-state-pls",
+                    "title": "Perlis DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Perlis state contest from 1959-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-ballots-state-kdh",
+                    "title": "Kedah DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Kedah state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-stats-state-kdh",
+                    "title": "Kedah DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Kedah state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-ballots-state-ktn",
+                    "title": "Kelantan DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Kelantan state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-stats-state-ktn",
+                    "title": "Kelantan DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Kelantan state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-ballots-state-trg",
+                    "title": "Terengganu DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every T'ganu state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-stats-state-trg",
+                    "title": "Terengganu DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every T'ganu state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-ballots-state-png",
+                    "title": "Pulau Pinang DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Penang state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-stats-state-png",
+                    "title": "Pulau Pinang DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Penang state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-ballots-state-prk",
+                    "title": "Perak DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Perak state contest from 1959-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-stats-state-prk",
+                    "title": "Perak DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Perak state contest from 1959-present.",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "headline-ballots-state-phg",
+                    "title": "Pahang DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Pahang state contest from 1959-present.",
+                    "data_as_of": "2022-12-07"
+                },
+                {
+                    "id": "headline-stats-state-phg",
+                    "title": "Pahang DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Pahang state contest from 1959-present.",
+                    "data_as_of": "2022-12-07"
+                },
+                {
+                    "id": "headline-ballots-state-sgr",
+                    "title": "Selangor DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Selangor state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-stats-state-sgr",
+                    "title": "Selangor DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Selangor state contest from 1959-present.",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "headline-ballots-state-nsn",
+                    "title": "Negeri Sembilan DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every N9 state contest from 1959-present.",
+                    "data_as_of": "2026-08-01"
+                },
+                {
+                    "id": "headline-stats-state-nsn",
+                    "title": "Negeri Sembilan DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every N9 state contest from 1959-present.",
+                    "data_as_of": "2026-08-01"
+                },
+                {
+                    "id": "headline-ballots-state-mlk",
+                    "title": "Melaka DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Melaka state contest from 1959-present.",
+                    "data_as_of": "2021-11-20"
+                },
+                {
+                    "id": "headline-stats-state-mlk",
+                    "title": "Melaka DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Melaka state contest from 1959-present.",
+                    "data_as_of": "2021-11-20"
+                },
+                {
+                    "id": "headline-ballots-state-jhr",
+                    "title": "Johor DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Johor state contest from 1959-present.",
+                    "data_as_of": "2026-07-11"
+                },
+                {
+                    "id": "headline-stats-state-jhr",
+                    "title": "Johor DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Johor state contest from 1959-present.",
+                    "data_as_of": "2026-07-11"
+                },
+                {
+                    "id": "headline-ballots-state-sbh",
+                    "title": "Sabah DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Sabah state contest from 1967-present.",
+                    "data_as_of": "2025-11-29"
+                },
+                {
+                    "id": "headline-stats-state-sbh",
+                    "title": "Sabah DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Sabah state contest from 1967-present.",
+                    "data_as_of": "2025-11-29"
+                },
+                {
+                    "id": "headline-ballots-state-swk",
+                    "title": "Sarawak DUN Elections (PRN): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every Sarawak state contest from 1969-present.",
+                    "data_as_of": "2021-12-18"
+                },
+                {
+                    "id": "headline-stats-state-swk",
+                    "title": "Sarawak DUN Elections (PRN): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Sarawak state contest from 1969-present.",
+                    "data_as_of": "2021-12-18"
+                },
+                {
+                    "id": "headline-ballots-byelections",
+                    "title": "By-Elections (PRK): Ballots",
+                    "description": "Candidate-level results, party affiliations, and demographic details for every by-election from 1957-present.",
+                    "data_as_of": "2026-01-24"
+                },
+                {
+                    "id": "headline-stats-byelections",
+                    "title": "By-Elections (PRK): Statistics",
+                    "description": "Seat-level stats (voter turnout, rejected votes, etc) for every by-election from 1957-present.",
+                    "data_as_of": "2026-01-24"
+                }
+            ],
+            "Saluran-Level (Federal)": [
+                {
+                    "id": "saluran-ballots-ge15",
+                    "title": "GE15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th General Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-stats-ge15",
+                    "title": "GE15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th General Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-ballots-ge14",
+                    "title": "GE14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th General Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-ge14",
+                    "title": "GE14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th General Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-ge13",
+                    "title": "GE13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th General Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-ge13",
+                    "title": "GE13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th General Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-ge12",
+                    "title": "GE12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th General Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-ge12",
+                    "title": "GE12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th General Election (2008).",
+                    "data_as_of": "2008-03-08"
+                }
+            ],
+            "Saluran-Level (Perlis State)": [
+                {
+                    "id": "saluran-ballots-pls-se15",
+                    "title": "Perlis SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Perlis State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-stats-pls-se15",
+                    "title": "Perlis SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Perlis State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                }
+            ],
+            "Saluran-Level (Kedah State)": [
+                {
+                    "id": "saluran-ballots-kdh-se15",
+                    "title": "Kedah SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Kedah State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-kdh-se15",
+                    "title": "Kedah SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Kedah State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (Kelantan State)": [
+                {
+                    "id": "saluran-ballots-ktn-se15",
+                    "title": "Kelantan SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Kelantan State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-ktn-se15",
+                    "title": "Kelantan SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Kelantan State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (T'ganu State)": [
+                {
+                    "id": "saluran-ballots-trg-se15",
+                    "title": "Terengganu SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Terengganu State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-trg-se15",
+                    "title": "Terengganu SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Terengganu State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (Penang State)": [
+                {
+                    "id": "saluran-ballots-png-se15",
+                    "title": "Pulau Pinang SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Pulau Pinang State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-png-se15",
+                    "title": "Pulau Pinang SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Pulau Pinang State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (Perak State)": [
+                {
+                    "id": "saluran-ballots-prk-se15",
+                    "title": "Perak SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Perak State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-stats-prk-se15",
+                    "title": "Perak SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Perak State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                }
+            ],
+            "Saluran-Level (Pahang State)": [
+                {
+                    "id": "saluran-ballots-phg-se15",
+                    "title": "Pahang SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Pahang State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-stats-phg-se15",
+                    "title": "Pahang SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Pahang State Election (2022).",
+                    "data_as_of": "2022-11-19"
+                }
+            ],
+            "Saluran-Level (Selangor State)": [
+                {
+                    "id": "saluran-ballots-sgr-se15",
+                    "title": "Selangor SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Selangor State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-sgr-se15",
+                    "title": "Selangor SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Selangor State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (N9 State)": [
+                {
+                    "id": "saluran-ballots-nsn-se15",
+                    "title": "Negeri Sembilan SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th N9 State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-stats-nsn-se15",
+                    "title": "Negeri Sembilan SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th N9 State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Saluran-Level (Melaka State)": [
+                {
+                    "id": "saluran-ballots-mlk-se15",
+                    "title": "Melaka SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Melaka State Election (2021).",
+                    "data_as_of": "2021-11-20"
+                },
+                {
+                    "id": "saluran-stats-mlk-se15",
+                    "title": "Melaka SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Melaka State Election (2021).",
+                    "data_as_of": "2021-11-20"
+                }
+            ],
+            "Saluran-Level (Johor State)": [
+                {
+                    "id": "saluran-ballots-jhr-se16",
+                    "title": "Johor SE-16: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 16th Johor State Election (2026).",
+                    "data_as_of": "2026-07-11"
+                },
+                {
+                    "id": "saluran-stats-jhr-se16",
+                    "title": "Johor SE-16: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 16th Johor State Election (2026).",
+                    "data_as_of": "2026-07-11"
+                },
+                {
+                    "id": "saluran-ballots-jhr-se15",
+                    "title": "Johor SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Johor State Election (2022).",
+                    "data_as_of": "2022-03-12"
+                },
+                {
+                    "id": "saluran-stats-jhr-se15",
+                    "title": "Johor SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Johor State Election (2022).",
+                    "data_as_of": "2022-03-12"
+                }
+            ],
+            "Saluran-Level (Sabah State)": [
+                {
+                    "id": "saluran-ballots-sbh-se15",
+                    "title": "Sabah SE-15: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 15th Sabah State Election (2025).",
+                    "data_as_of": "2025-11-29"
+                },
+                {
+                    "id": "saluran-stats-sbh-se15",
+                    "title": "Sabah SE-15: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Sabah State Election (2025).",
+                    "data_as_of": "2025-11-29"
+                }
+            ],
+            "Saluran-Level (Sarawak State)": [
+                {
+                    "id": "saluran-ballots-swk-se12",
+                    "title": "Sarawak SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Sarawak State Election (2021).",
+                    "data_as_of": "2021-12-18"
+                },
+                {
+                    "id": "saluran-stats-swk-se12",
+                    "title": "Sarawak SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Sarawak State Election (2021).",
+                    "data_as_of": "2021-12-18"
+                }
+            ]
+        },
+        "Electoral Maps": {
+            "Delimitation: Parliament": [
+                {
+                    "id": "sarawak-2026-parlimen",
+                    "title": "2026 Delimitation: Sarawak (Parliament)",
+                    "description": "EC's 1st proposal for the boundaries of Sarawak's parliamentary constituencies in the 2026 delimitation exercise.",
+                    "data_as_of": "2026"
+                },
+                {
+                    "id": "sabah-2019-parlimen",
+                    "title": "2019 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 2019 delimitation exercise.",
+                    "data_as_of": "2019"
+                },
+                {
+                    "id": "peninsular-2018-parlimen",
+                    "title": "2018 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 2018 delimitation exercise.",
+                    "data_as_of": "2018"
+                },
+                {
+                    "id": "sarawak-2015-parlimen",
+                    "title": "2015 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 2015 delimitation exercise.",
+                    "data_as_of": "2015"
+                },
+                {
+                    "id": "sarawak-2005-parlimen",
+                    "title": "2005 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 2005 delimitation exercise.",
+                    "data_as_of": "2005"
+                },
+                {
+                    "id": "peninsular-2003-parlimen",
+                    "title": "2003 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 2003 delimitation exercise.",
+                    "data_as_of": "2003"
+                },
+                {
+                    "id": "sabah-2003-parlimen",
+                    "title": "2003 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 2003 delimitation exercise.",
+                    "data_as_of": "2003"
+                },
+                {
+                    "id": "sarawak-1996-parlimen",
+                    "title": "1996 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 1996 delimitation exercise.",
+                    "data_as_of": "1996"
+                },
+                {
+                    "id": "peninsular-1994-parlimen",
+                    "title": "1994 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 1994 delimitation exercise.",
+                    "data_as_of": "1994"
+                },
+                {
+                    "id": "sabah-1994-parlimen",
+                    "title": "1994 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 1994 delimitation exercise.",
+                    "data_as_of": "1994"
+                },
+                {
+                    "id": "sarawak-1987-parlimen",
+                    "title": "1987 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 1987 delimitation exercise.",
+                    "data_as_of": "1987"
+                },
+                {
+                    "id": "peninsular-1984-parlimen",
+                    "title": "1984 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 1984 delimitation exercise.",
+                    "data_as_of": "1984"
+                },
+                {
+                    "id": "sabah-1984-parlimen",
+                    "title": "1984 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 1984 delimitation exercise.",
+                    "data_as_of": "1984"
+                },
+                {
+                    "id": "sarawak-1977-parlimen",
+                    "title": "1977 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 1977 delimitation exercise.",
+                    "data_as_of": "1977"
+                },
+                {
+                    "id": "peninsular-1974-parlimen",
+                    "title": "1974 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 1974 delimitation exercise.",
+                    "data_as_of": "1974"
+                },
+                {
+                    "id": "sabah-1974-parlimen",
+                    "title": "1974 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 1974 delimitation exercise.",
+                    "data_as_of": "1974"
+                },
+                {
+                    "id": "sarawak-1968-parlimen",
+                    "title": "1968 Delimitation: Sarawak (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sarawak following the 1968 delimitation exercise.",
+                    "data_as_of": "1968"
+                },
+                {
+                    "id": "sabah-1966-parlimen",
+                    "title": "1966 Delimitation: Sabah (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Sabah following the 1966 delimitation exercise.",
+                    "data_as_of": "1966"
+                },
+                {
+                    "id": "peninsular-1958-parlimen",
+                    "title": "1958 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 1958 delimitation exercise.",
+                    "data_as_of": "1958"
+                },
+                {
+                    "id": "peninsular-1954-parlimen",
+                    "title": "1954 Delimitation: Peninsular (Parliament)",
+                    "description": "Boundaries of parliamentary constituencies in Peninsular Malaysia following the 1954 delimitation exercise.",
+                    "data_as_of": "1954"
+                }
+            ],
+            "Delimitation: DUNs": [
+                {
+                    "id": "sarawak-2026-dun",
+                    "title": "2026 Delimitation: Sarawak (DUN)",
+                    "description": "EC's 1st proposal for the boundaries of Sarawak's DUN constituencies in the 2026 delimitation exercise.",
+                    "data_as_of": "2026"
+                },
+                {
+                    "id": "sabah-2019-dun",
+                    "title": "2019 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 2019 delimitation exercise.",
+                    "data_as_of": "2019"
+                },
+                {
+                    "id": "peninsular-2018-dun",
+                    "title": "2018 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 2018 delimitation exercise.",
+                    "data_as_of": "2018"
+                },
+                {
+                    "id": "sarawak-2015-dun",
+                    "title": "2015 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 2015 delimitation exercise.",
+                    "data_as_of": "2015"
+                },
+                {
+                    "id": "sarawak-2005-dun",
+                    "title": "2005 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 2005 delimitation exercise.",
+                    "data_as_of": "2005"
+                },
+                {
+                    "id": "peninsular-2003-dun",
+                    "title": "2003 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 2003 delimitation exercise.",
+                    "data_as_of": "2003"
+                },
+                {
+                    "id": "sabah-2003-dun",
+                    "title": "2003 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 2003 delimitation exercise.",
+                    "data_as_of": "2003"
+                },
+                {
+                    "id": "sarawak-1996-dun",
+                    "title": "1996 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 1996 delimitation exercise.",
+                    "data_as_of": "1996"
+                },
+                {
+                    "id": "peninsular-1994-dun",
+                    "title": "1994 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 1994 delimitation exercise.",
+                    "data_as_of": "1994"
+                },
+                {
+                    "id": "sabah-1994-dun",
+                    "title": "1994 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 1994 delimitation exercise.",
+                    "data_as_of": "1994"
+                },
+                {
+                    "id": "sarawak-1987-dun",
+                    "title": "1987 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 1987 delimitation exercise.",
+                    "data_as_of": "1987"
+                },
+                {
+                    "id": "peninsular-1984-dun",
+                    "title": "1984 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 1984 delimitation exercise.",
+                    "data_as_of": "1984"
+                },
+                {
+                    "id": "sabah-1984-dun",
+                    "title": "1984 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 1984 delimitation exercise.",
+                    "data_as_of": "1984"
+                },
+                {
+                    "id": "sarawak-1977-dun",
+                    "title": "1977 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 1977 delimitation exercise.",
+                    "data_as_of": "1977"
+                },
+                {
+                    "id": "peninsular-1974-dun",
+                    "title": "1974 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 1974 delimitation exercise.",
+                    "data_as_of": "1974"
+                },
+                {
+                    "id": "sabah-1974-dun",
+                    "title": "1974 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 1974 delimitation exercise.",
+                    "data_as_of": "1974"
+                },
+                {
+                    "id": "sarawak-1968-dun",
+                    "title": "1968 Delimitation: Sarawak (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sarawak following the 1968 delimitation exercise.",
+                    "data_as_of": "1968"
+                },
+                {
+                    "id": "sabah-1966-dun",
+                    "title": "1966 Delimitation: Sabah (DUN)",
+                    "description": "Boundaries of DUN constituencies in Sabah following the 1966 delimitation exercise.",
+                    "data_as_of": "1966"
+                },
+                {
+                    "id": "peninsular-1958-dun",
+                    "title": "1958 Delimitation: Peninsular (DUN)",
+                    "description": "Boundaries of DUN constituencies in Peninsular Malaysia following the 1958 delimitation exercise.",
+                    "data_as_of": "1958"
+                }
+            ],
+            "Subdivision: DMs (Voting Districts)": [
+                {
+                    "id": "sarawak-2026-dm",
+                    "title": "2026 Subdivision: Sarawak (DMs)",
+                    "description": "Boundaries of voting districts in Sarawak, as used for the EC's 1st proposal in the 2026 delimitation exercise.",
+                    "data_as_of": "2026"
+                },
+                {
+                    "id": "sabah-2019-dm",
+                    "title": "2019 Subdivision: Sabah (DMs)",
+                    "description": "Boundaries of voting districts in Sabah following the 2019 delimitation and accompanying subdivision exercise.",
+                    "data_as_of": "2019"
+                },
+                {
+                    "id": "peninsular-2018-dm",
+                    "title": "2018 Subdivision: Peninsular (DMs)",
+                    "description": "Boundaries of voting districts in Peninsular Malaysia following the 2018 delimitation and accompanying subdivision exercise.",
+                    "data_as_of": "2018"
+                },
+                {
+                    "id": "sarawak-2015-dm",
+                    "title": "2015 Subdivision: Sarawak (DMs)",
+                    "description": "Boundaries of voting districts in Sarawak following the 2015 delimitation and accompanying subdivision exercise.",
+                    "data_as_of": "2015"
+                }
+            ]
+        },
+        "Voter Rolls (Anonymised)": {
+            "Federal Elections": [
+                {
+                    "id": "voter-roll-anonymised-ge15",
+                    "title": "GE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 21,173,638 voters eligible to vote in the 15th General Election (2022).",
+                    "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "voter-roll-anonymised-ge14",
+                    "title": "GE-14: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 14,940,624 voters eligible to vote in the 14th General Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "voter-roll-anonymised-ge13",
+                    "title": "GE-13: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 13,268,002 voters eligible to vote in the 13th General Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "voter-roll-anonymised-ge12",
+                    "title": "GE-12: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 10,922,140 voters eligible to vote in the 12th General Election (2008).",
+                    "data_as_of": "2008-03-08"
+                }
+            ],
+            "Kedah State Elections": [
+                {
+                    "id": "voter-roll-anonymised-kdh-se15",
+                    "title": "Kedah SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,585,085 voters eligible to vote in the 15th Kedah State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Kelantan State Elections": [
+                {
+                    "id": "voter-roll-anonymised-ktn-se15",
+                    "title": "Kelantan SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,411,912 voters eligible to vote in the 15th Kelantan State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "T'ganu State Elections": [
+                {
+                    "id": "voter-roll-anonymised-trg-se15",
+                    "title": "Terengganu SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 930,894 voters eligible to vote in the 15th Terengganu State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Penang State Elections": [
+                {
+                    "id": "voter-roll-anonymised-png-se15",
+                    "title": "Pulau Pinang SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,234,198 voters eligible to vote in the 15th Pulau Pinang State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Selangor State Elections": [
+                {
+                    "id": "voter-roll-anonymised-sgr-se15",
+                    "title": "Selangor SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 3,747,057 voters eligible to vote in the 15th Selangor State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "N9 State Elections": [
+                {
+                    "id": "voter-roll-anonymised-nsn-se16",
+                    "title": "Negeri Sembilan SE-16: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 889,490 voters eligible to vote in the 16th N9 State Election (2026).",
+                    "data_as_of": "2026-08-01"
+                },
+                {
+                    "id": "voter-roll-anonymised-nsn-se15",
+                    "title": "Negeri Sembilan SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 864,425 voters eligible to vote in the 15th N9 State Election (2023).",
+                    "data_as_of": "2023-08-12"
+                }
+            ],
+            "Melaka State Elections": [
+                {
+                    "id": "voter-roll-anonymised-mlk-se15",
+                    "title": "Melaka SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 495,195 voters eligible to vote in the 15th Melaka State Election (2021).",
+                    "data_as_of": "2021-11-20"
+                }
+            ],
+            "Johor State Elections": [
+                {
+                    "id": "voter-roll-anonymised-jhr-se16",
+                    "title": "Johor SE-16: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 2,727,926 voters eligible to vote in the 16th Johor State Election (2026).",
+                    "data_as_of": "2026-07-11"
+                },
+                {
+                    "id": "voter-roll-anonymised-jhr-se15",
+                    "title": "Johor SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 2,597,742 voters eligible to vote in the 15th Johor State Election (2022).",
+                    "data_as_of": "2022-03-12"
+                }
+            ],
+            "Sabah State Elections": [
+                {
+                    "id": "voter-roll-anonymised-sbh-se15",
+                    "title": "Sabah SE-15: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,784,843 voters eligible to vote in the 15th Sabah State Election (2025).",
+                    "data_as_of": "2025-11-29"
+                }
+            ],
+            "Sarawak State Elections": [
+                {
+                    "id": "voter-roll-anonymised-swk-se12",
+                    "title": "Sarawak SE-12: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,252,014 voters eligible to vote in the 12th Sarawak State Election (2021).",
+                    "data_as_of": "2021-12-18"
+                }
+            ]
+        }
+    }
+}
