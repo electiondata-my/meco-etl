@@ -423,6 +423,18 @@
                     "title": "Sabah SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Sabah State Election (2025).",
                     "data_as_of": "2025-11-29"
+                },
+                {
+                    "id": "saluran-ballots-sbh-se14",
+                    "title": "Sabah SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Sabah State Election (2020).",
+                    "data_as_of": "2020-09-26"
+                },
+                {
+                    "id": "saluran-stats-sbh-se14",
+                    "title": "Sabah SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Sabah State Election (2020).",
+                    "data_as_of": "2020-09-26"
                 }
             ],
             "Saluran-Level (Sarawak State)": [
@@ -815,6 +827,12 @@
                     "title": "Sabah SE-15: Anonymised Voter Roll",
                     "description": "Anonymised individual-level voter roll detailing the 1,784,843 voters eligible to vote in the 15th Sabah State Election (2025).",
                     "data_as_of": "2025-11-29"
+                },
+                {
+                    "id": "voter-roll-anonymised-sbh-se14",
+                    "title": "Sabah SE-14: Anonymised Voter Roll",
+                    "description": "Anonymised individual-level voter roll detailing the 1,124,598 voters eligible to vote in the 14th Sabah State Election (2020).",
+                    "data_as_of": "2020-09-26"
                 }
             ],
             "Sarawak State Elections": [
