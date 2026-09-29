@@ -42,7 +42,7 @@ VR_LEVELS = [
     "Federal Elections",
     "Kedah State Elections",
     "Kelantan State Elections",
-    "Trg State Elections",
+    "T'ganu State Elections",
     "Penang State Elections",
     "Selangor State Elections",
     "N9 State Elections",
