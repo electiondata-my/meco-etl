@@ -36,6 +36,29 @@ api_candidates.py
 
 ---
 
+## New election checklist
+
+Pending elections need no flag. Once upstream `consol_ballots.parquet` has the candidates with `result = 'pending'`, the pipeline treats the election as post-nomination, pre-results. The steps below are the manual ones.
+
+### Nomination day
+
+1. **Elections dropdown.** Add the election by hand to `internal.electiondata.my/elections/dropdown.json` (gitignored, not generated), at the top of its state's block, e.g. `{"state":"Melaka","type":"dun","election":"SE-16","date":"2026-11-14"}`. `api_elections.py` uploads it to both buckets.
+2. **Homepage.** Make the state map images `og-image/{state}-se{n}.png` and `-dark.png` (1200×630) with the snippet in `paper-meco-maps/playground.ipynb` (one cell per election; filter to the state and adjust the zoom). Save them to `internal.electiondata.my/og-image/`, add the election at the top of `internal.electiondata.my/latest.json`, then run `api_latest.py`.
+3. **Run the pipeline** in the order above.
+4. **Lake and catalogue.** Run `lake_results_headline.py`. The new pending rows land in the national and state headline files, so set `data_as_of` to the nomination date in `internal.electiondata.my/catalogue/index.json` for `headline-{ballots,stats}` and `headline-{ballots,stats}-state-{code}`, then run `api_catalogue_results_headline.py`.
+
+### When the voter roll is available
+
+5. **Voter roll.** Add the state to `dun_rolls` in `api_seats_current.py`, keyed by the full-name slug suffix (e.g. `"-melaka"`, not `"-mlk"`), pointing at `{PATH_VR}{code}_se{n}_{year}.parquet`. Re-run `api_seats_current.py`.
+
+### Polling day
+
+6. **Election-night constants.** Point `api_election_night.py` at the new election: `DATE`, `ELECTION`, `STATE`, `STATE_CODE`, plus the state name and seat count in the docstrings. On run it also sets `data_as_of` in `catalogue/index.json` for `headline-{ballots,stats}` and the state's `headline-{ballots,stats}-state-{code}` slices, which is what the catalogue shows as `last_updated`.
+
+The `last_updated` field in `template-catalogue/headline-*.json` is overwritten by `api_catalogue_results_headline.py` and has no effect.
+
+---
+
 ## Script reference
 
 ### Pipeline scripts
@@ -79,6 +102,9 @@ Renders Open Graph images (one per parliamentary constituency and state) using P
 
 #### `api_redelineation.py`
 Uploads pre-generated redelineation JSON files to R2. No data transformation — purely a sync operation.
+
+#### `api_latest.py`
+Uploads the homepage's `latest.json` (maintained by hand, gitignored) and the OG images it references. Images already live are skipped; new ones are uploaded from `og-image/`. If an image is neither live nor local, the script stops before uploading `latest.json`, so the homepage never points at a missing image. To replace an image that is already live, upload it with `api_og.upload_og_images()`.
 
 ---
 

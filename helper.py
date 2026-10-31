@@ -19,6 +19,7 @@ from openpyxl.utils import get_column_letter
 
 import boto3
 from boto3.s3.transfer import TransferConfig
+from botocore.config import Config
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -148,6 +149,12 @@ def get_r2_client():
         aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
         region_name="auto",
+        # the client is shared across upload threads (up to 120); a pool smaller than that
+        # leaves threads contending for connections, which surfaces as SSL "bad record mac"
+        config=Config(
+            max_pool_connections=128,
+            retries={"max_attempts": 5, "mode": "standard"},
+        ),
     )
 
 
@@ -189,9 +196,18 @@ def upload_single(
 
 
 def upload_bulk(
-    client=None, bucket=None, files_to_upload=None, max_workers=50, content_type="application/json"
+    client=None,
+    bucket=None,
+    files_to_upload=None,
+    max_workers=50,
+    content_type="application/json",
+    retry_passes=3,
 ):
     """Upload multiple files to S3/R2 in parallel.
+
+    Files that fail the parallel pass are retried one at a time, with a growing pause
+    between passes. Anything still failing after that raises, so a partial upload
+    can't finish silently.
 
     Args:
         client: S3/R2 client
@@ -199,19 +215,45 @@ def upload_bulk(
         files_to_upload: List of tuples (source_file, cloud_file)
         max_workers: Maximum number of workers
         content_type: Content type of the files
+        retry_passes: Number of sequential retry passes for failed files
+
+    Raises:
+        RuntimeError: if any file still fails after all retry passes
     """
-    results = {}
+    failed = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_file = {
-            executor.submit(upload_single, client, bucket, source, cloud, content_type): source
+            executor.submit(upload_single, client, bucket, source, cloud, content_type): (
+                source,
+                cloud,
+            )
             for source, cloud in files_to_upload
         }
         for future in as_completed(future_to_file):
-            source_file, success, message = future.result()
-            results[source_file] = (success, message)
+            _, success, message = future.result()
             print(message)
+            if not success:
+                failed[future_to_file[future]] = message
 
-    return [(source, msg) for source, (success, msg) in results.items() if not success]
+    for attempt in range(1, retry_passes + 1):
+        if not failed:
+            break
+        time.sleep(2**attempt)
+        print(f"\nRetry pass {attempt}/{retry_passes}: {len(failed):,.0f} files")
+        for source, cloud in list(failed):
+            _, success, message = upload_single(client, bucket, source, cloud, content_type)
+            print(message)
+            if success:
+                del failed[(source, cloud)]
+            else:
+                failed[(source, cloud)] = message
+
+    if failed:
+        raise RuntimeError(
+            f"{len(failed):,.0f} files failed to upload to {bucket}:\n"
+            + "\n".join(cloud for _, cloud in failed)
+        )
+    return []
 
 
 def purge_cf_cache(file_keys: list[str], base_url: str) -> None:

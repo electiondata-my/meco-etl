@@ -6,13 +6,13 @@
                     "id": "headline-ballots",
                     "title": "All Elections: Ballots",
                     "description": "Candidate-level results, party affiliations, and demographic details for every contest from 1955-present.",
-                    "data_as_of": "2026-08-01"
+                    "data_as_of": "2026-10-31"
                 },
                 {
                     "id": "headline-stats",
                     "title": "All Elections: Statistics",
                     "description": "Seat-level stats (voter turnout, rejected votes, etc) for every contest from 1955-present.",
-                    "data_as_of": "2026-08-01"
+                    "data_as_of": "2026-10-31"
                 },
                 {
                     "id": "headline-ballots-federal",
@@ -138,13 +138,13 @@
                     "id": "headline-ballots-state-mlk",
                     "title": "Melaka DUN Elections (PRN): Ballots",
                     "description": "Candidate-level results, party affiliations, and demographic details for every Melaka state contest from 1959-present.",
-                    "data_as_of": "2021-11-20"
+                    "data_as_of": "2026-10-31"
                 },
                 {
                     "id": "headline-stats-state-mlk",
                     "title": "Melaka DUN Elections (PRN): Statistics",
                     "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Melaka state contest from 1959-present.",
-                    "data_as_of": "2021-11-20"
+                    "data_as_of": "2026-10-31"
                 },
                 {
                     "id": "headline-ballots-state-jhr",
@@ -257,6 +257,42 @@
                     "title": "Perlis SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Perlis State Election (2022).",
                     "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-ballots-pls-se14",
+                    "title": "Perlis SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Perlis State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-pls-se14",
+                    "title": "Perlis SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Perlis State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-pls-se13",
+                    "title": "Perlis SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Perlis State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-pls-se13",
+                    "title": "Perlis SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Perlis State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-pls-se12",
+                    "title": "Perlis SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Perlis State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-pls-se12",
+                    "title": "Perlis SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Perlis State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Kedah State)": [
@@ -271,6 +307,42 @@
                     "title": "Kedah SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Kedah State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-kdh-se14",
+                    "title": "Kedah SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Kedah State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-kdh-se14",
+                    "title": "Kedah SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Kedah State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-kdh-se13",
+                    "title": "Kedah SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Kedah State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-kdh-se13",
+                    "title": "Kedah SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Kedah State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-kdh-se12",
+                    "title": "Kedah SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Kedah State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-kdh-se12",
+                    "title": "Kedah SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Kedah State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Kelantan State)": [
@@ -285,6 +357,42 @@
                     "title": "Kelantan SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Kelantan State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-ktn-se14",
+                    "title": "Kelantan SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Kelantan State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-ktn-se14",
+                    "title": "Kelantan SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Kelantan State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-ktn-se13",
+                    "title": "Kelantan SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Kelantan State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-ktn-se13",
+                    "title": "Kelantan SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Kelantan State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-ktn-se12",
+                    "title": "Kelantan SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Kelantan State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-ktn-se12",
+                    "title": "Kelantan SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Kelantan State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (T'ganu State)": [
@@ -299,6 +407,42 @@
                     "title": "Terengganu SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Terengganu State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-trg-se14",
+                    "title": "Terengganu SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Terengganu State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-trg-se14",
+                    "title": "Terengganu SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Terengganu State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-trg-se13",
+                    "title": "Terengganu SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Terengganu State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-trg-se13",
+                    "title": "Terengganu SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Terengganu State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-trg-se12",
+                    "title": "Terengganu SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Terengganu State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-trg-se12",
+                    "title": "Terengganu SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Terengganu State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Penang State)": [
@@ -313,6 +457,42 @@
                     "title": "Pulau Pinang SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Pulau Pinang State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-png-se14",
+                    "title": "Pulau Pinang SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Pulau Pinang State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-png-se14",
+                    "title": "Pulau Pinang SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Pulau Pinang State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-png-se13",
+                    "title": "Pulau Pinang SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Pulau Pinang State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-png-se13",
+                    "title": "Pulau Pinang SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Pulau Pinang State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-png-se12",
+                    "title": "Pulau Pinang SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Pulau Pinang State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-png-se12",
+                    "title": "Pulau Pinang SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Pulau Pinang State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Perak State)": [
@@ -327,6 +507,42 @@
                     "title": "Perak SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Perak State Election (2022).",
                     "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-ballots-prk-se14",
+                    "title": "Perak SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Perak State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-prk-se14",
+                    "title": "Perak SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Perak State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-prk-se13",
+                    "title": "Perak SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Perak State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-prk-se13",
+                    "title": "Perak SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Perak State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-prk-se12",
+                    "title": "Perak SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Perak State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-prk-se12",
+                    "title": "Perak SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Perak State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Pahang State)": [
@@ -341,6 +557,42 @@
                     "title": "Pahang SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Pahang State Election (2022).",
                     "data_as_of": "2022-11-19"
+                },
+                {
+                    "id": "saluran-ballots-phg-se14",
+                    "title": "Pahang SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Pahang State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-phg-se14",
+                    "title": "Pahang SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Pahang State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-phg-se13",
+                    "title": "Pahang SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Pahang State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-phg-se13",
+                    "title": "Pahang SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Pahang State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-phg-se12",
+                    "title": "Pahang SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Pahang State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-phg-se12",
+                    "title": "Pahang SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Pahang State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Selangor State)": [
@@ -355,6 +607,42 @@
                     "title": "Selangor SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Selangor State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-sgr-se14",
+                    "title": "Selangor SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Selangor State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-sgr-se14",
+                    "title": "Selangor SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Selangor State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-sgr-se13",
+                    "title": "Selangor SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Selangor State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-sgr-se13",
+                    "title": "Selangor SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Selangor State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-sgr-se12",
+                    "title": "Selangor SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Selangor State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-sgr-se12",
+                    "title": "Selangor SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Selangor State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (N9 State)": [
@@ -369,6 +657,42 @@
                     "title": "Negeri Sembilan SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th N9 State Election (2023).",
                     "data_as_of": "2023-08-12"
+                },
+                {
+                    "id": "saluran-ballots-nsn-se14",
+                    "title": "Negeri Sembilan SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th N9 State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-nsn-se14",
+                    "title": "Negeri Sembilan SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th N9 State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-nsn-se13",
+                    "title": "Negeri Sembilan SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th N9 State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-nsn-se13",
+                    "title": "Negeri Sembilan SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th N9 State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-nsn-se12",
+                    "title": "Negeri Sembilan SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th N9 State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-nsn-se12",
+                    "title": "Negeri Sembilan SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th N9 State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Melaka State)": [
@@ -383,6 +707,42 @@
                     "title": "Melaka SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Melaka State Election (2021).",
                     "data_as_of": "2021-11-20"
+                },
+                {
+                    "id": "saluran-ballots-mlk-se14",
+                    "title": "Melaka SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Melaka State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-mlk-se14",
+                    "title": "Melaka SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Melaka State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-mlk-se13",
+                    "title": "Melaka SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Melaka State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-mlk-se13",
+                    "title": "Melaka SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Melaka State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-mlk-se12",
+                    "title": "Melaka SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Melaka State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-mlk-se12",
+                    "title": "Melaka SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Melaka State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Johor State)": [
@@ -409,6 +769,42 @@
                     "title": "Johor SE-15: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 15th Johor State Election (2022).",
                     "data_as_of": "2022-03-12"
+                },
+                {
+                    "id": "saluran-ballots-jhr-se14",
+                    "title": "Johor SE-14: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 14th Johor State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-jhr-se14",
+                    "title": "Johor SE-14: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Johor State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-jhr-se13",
+                    "title": "Johor SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Johor State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-jhr-se13",
+                    "title": "Johor SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Johor State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-jhr-se12",
+                    "title": "Johor SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Johor State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-jhr-se12",
+                    "title": "Johor SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Johor State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Sabah State)": [
@@ -435,6 +831,42 @@
                     "title": "Sabah SE-14: Saluran-Level Statistics",
                     "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 14th Sabah State Election (2020).",
                     "data_as_of": "2020-09-26"
+                },
+                {
+                    "id": "saluran-ballots-sbh-se13",
+                    "title": "Sabah SE-13: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 13th Sabah State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-stats-sbh-se13",
+                    "title": "Sabah SE-13: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 13th Sabah State Election (2018).",
+                    "data_as_of": "2018-05-09"
+                },
+                {
+                    "id": "saluran-ballots-sbh-se12",
+                    "title": "Sabah SE-12: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 12th Sabah State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-stats-sbh-se12",
+                    "title": "Sabah SE-12: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 12th Sabah State Election (2013).",
+                    "data_as_of": "2013-05-05"
+                },
+                {
+                    "id": "saluran-ballots-sbh-se11",
+                    "title": "Sabah SE-11: Saluran-Level Ballots",
+                    "description": "Saluran-level votes for every candidate across all contests in the 11th Sabah State Election (2008).",
+                    "data_as_of": "2008-03-08"
+                },
+                {
+                    "id": "saluran-stats-sbh-se11",
+                    "title": "Sabah SE-11: Saluran-Level Statistics",
+                    "description": "Saluran-level stats (voter turnout, rejected votes, etc) for every contest in the 11th Sabah State Election (2008).",
+                    "data_as_of": "2008-03-08"
                 }
             ],
             "Saluran-Level (Sarawak State)": [
