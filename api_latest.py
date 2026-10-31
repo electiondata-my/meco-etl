@@ -6,7 +6,7 @@ It:
 - Reads latest.json (maintained by hand) and collects the og-image keys it references
 - Skips referenced images that are already live; uploads the rest from local
 - Refuses to upload latest.json if any referenced image is missing both live and locally
-- Uploads latest.json, then purges the Cloudflare cache for it
+- Uploads latest.json, then purges the Cloudflare cache for it and the new images
 
 Inputs:
 - internal.electiondata.my/latest.json
@@ -64,7 +64,7 @@ def check_images(keys):
 
 
 def upload_latest(client, bucket):
-    """Upload any new OG images first, then latest.json, then purge latest.json."""
+    """Upload any new OG images first, then latest.json, then purge both."""
     images = check_images(get_image_keys())
     upload_bulk(
         client,
@@ -74,8 +74,9 @@ def upload_latest(client, bucket):
         content_type="image/png",
     )
     upload_bulk(client, bucket, [(f"{PATH_LOCAL_INTERNAL}latest.json", "latest.json")])
-    purge_cf_cache(["latest.json"], BASE_URL)
-    print("\nPurged cache for latest.json")
+    # new images too: a request made before upload leaves a cached 404 at the edge
+    purge_cf_cache(["latest.json"] + images, BASE_URL)
+    print(f"\nPurged cache for latest.json and {len(images):,.0f} new images")
 
 
 if __name__ == "__main__":
