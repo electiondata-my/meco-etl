@@ -4,6 +4,7 @@ import os
 import re
 import json
 import time
+import fnmatch
 import hashlib
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -263,7 +264,22 @@ def upload_bulk(
 
 
 LAKE_MANIFEST_KEY = "core-freshness.json"
-LAKE_MANIFEST_EXCLUDE = ("maps/",)
+# Core parquets only: the files the MCP server loads (mirrors meco-back/mcp-server/docs.yaml).
+# Convenience slices (headline_*_federal, _byelections, _state_*) and consol_* are left out.
+LAKE_MANIFEST_CORE = (
+    "results_headline/headline_ballots.parquet",
+    "results_headline/headline_stats.parquet",
+    "results_headline/lookup_*.parquet",
+    "results_saluran/*_ballots.parquet",
+    "results_saluran/*_stats.parquet",
+    "voter_rolls/*.parquet",
+    "seat_info/*.parquet",
+)
+
+
+def _is_core_parquet(key):
+    """True if an R2 key is one of the core parquets tracked by the lake manifest."""
+    return any(fnmatch.fnmatchcase(key, p) for p in LAKE_MANIFEST_CORE)
 
 
 def _md5_file(path, chunk_size=1024 * 1024 * 8):
@@ -287,7 +303,7 @@ def write_lake_manifest(client, bucket, uploaded):
         client: R2 client
         bucket: lake bucket
         uploaded: (source_file, cloud_file) tuples uploaded in this run; non-parquet
-            files and excluded prefixes (maps/) are ignored
+            files outside LAKE_MANIFEST_CORE are ignored
     """
     try:
         manifest = json.loads(client.get_object(Bucket=bucket, Key=LAKE_MANIFEST_KEY)["Body"].read())
@@ -298,7 +314,7 @@ def write_lake_manifest(client, bucket, uploaded):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     this_run = set()
     for source, cloud in uploaded:
-        if not cloud.endswith(".parquet") or cloud.startswith(LAKE_MANIFEST_EXCLUDE):
+        if not _is_core_parquet(cloud):
             continue
         files[cloud] = {"md5": _md5_file(source), "size": os.path.getsize(source), "updated_at": now}
         this_run.add(cloud)
@@ -307,7 +323,7 @@ def write_lake_manifest(client, bucket, uploaded):
     for page in client.get_paginator("list_objects_v2").paginate(Bucket=bucket):
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            if key.endswith(".parquet") and not key.startswith(LAKE_MANIFEST_EXCLUDE):
+            if _is_core_parquet(key):
                 live[key] = obj["Size"]
 
     missing = sorted(k for k in this_run if k not in live)
