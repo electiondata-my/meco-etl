@@ -1,22 +1,25 @@
 """
 Module: lake_results_headline.py
 
-Writes headline election results to the data lake in CSV, Parquet, and Excel formats,
-then uploads all files to R2 meco-lake.
+Writes headline election results and lookup tables to the data lake, then uploads all files to R2 meco-lake.
 It:
 - Reads consolidated ballots and stats parquets from PATH_RESULTS_HEADLINE
 - Writes sliced outputs (all, federal, by-elections, per-state state elections)
+- Copies the lookup tables (CSV and Parquet) from PATH_RESULTS_HEADLINE
 - Uploads all CSV, Parquet, and Excel outputs to R2 meco-lake
 
 Inputs:
 - PATH_RESULTS_HEADLINE/consol_ballots.parquet
 - PATH_RESULTS_HEADLINE/consol_stats.parquet
+- PATH_RESULTS_HEADLINE/lookup_{v}.{csv,parquet}
 
 Outputs:
 - lake.electiondata.my/results_headline/headline_{v}[_{slice}].{csv,parquet,xlsx} uploaded to R2
+- lake.electiondata.my/results_headline/lookup_{v}.{csv,parquet} uploaded to R2
 """
 
 import os
+import shutil
 from glob import glob as g
 from datetime import datetime
 import pandas as pd
@@ -29,6 +32,15 @@ from helper import get_r2_client, upload_bulk
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_LOCAL_LAKE = "lake.electiondata.my/"
+LOOKUPS = [
+    "candidate",
+    "party",
+    "coalition",
+    "coalition_succession",
+    "party_succession",
+    "dates",
+    "prk",
+]
 
 
 def make_headline_results():
@@ -54,6 +66,17 @@ def make_headline_results():
             )
 
 
+def make_lookups():
+    """Copy lookup CSV and Parquet files into the local lake folder for upload."""
+    for v in LOOKUPS:
+        for ext in ["csv", "parquet"]:
+            shutil.copy2(
+                f"{PATH_RESULTS_HEADLINE}lookup_{v}.{ext}",
+                f"{PATH_LOCAL_LAKE}results_headline/lookup_{v}.{ext}",
+            )
+    print(f"Copied {len(LOOKUPS)} lookup tables (CSV + Parquet)")
+
+
 def upload_headline_results(client, bucket):
     """Upload all headline results files to R2 meco-lake."""
     prefix = f"{PATH_LOCAL_LAKE}results_headline/"
@@ -77,6 +100,7 @@ if __name__ == "__main__":
     BUCKET_LAKE = os.getenv("R2_BUCKET_LAKE")
 
     make_headline_results()
+    make_lookups()
     upload_headline_results(CLIENT, BUCKET_LAKE)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
