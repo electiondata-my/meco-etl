@@ -9,6 +9,7 @@ It:
 - Derives the SE-16 contestants (candidates, parties, coalitions, seats) from consol_ballots
 - Uploads to the API bucket only: the SE-16 candidates, their parties/coalitions (Negeri Sembilan-dun), the 36 Negeri Sembilan duns, the Negeri Sembilan SE-16 election, and the 36 SE-16 results files
 - Regenerates and uploads the lake headline files touched by SE-16 (headline_{ballots,stats} and their state_nsn slices)
+- Updates the lake freshness manifest once those lake uploads succeed
 - Refreshes data_as_of in the catalogue index for those datasets, rebuilds their catalogue JSONs, and uploads both
 
 Inputs:
@@ -29,6 +30,7 @@ Outputs:
 - api.electiondata.my/v1/elections/Negeri Sembilan/SE-16-*.json uploaded to R2
 - api.electiondata.my/v1/results/{seat}/2026-08-01.json copied to R2 (36 files)
 - lake.electiondata.my/results_headline/headline_{ballots,stats}[_state_nsn].{csv,parquet,xlsx} uploaded to R2
+- core-freshness.json updated in R2 meco-lake
 - internal.electiondata.my/catalogue/{index,headline-*}.json uploaded to R2
 """
 
@@ -46,6 +48,7 @@ from helper import (
     upload_bulk,
     purge_cf_cache,
     write_csv_parquet_excel,
+    write_lake_manifest,
 )
 
 from api_candidates import (
@@ -272,7 +275,8 @@ def make_lake_headline_se16():
 
 
 def upload_lake_headline_se16(client, bucket):
-    """Upload the SE-16 lake headline files to R2 meco-lake."""
+    """Upload the SE-16 lake headline files to R2 meco-lake; return the uploaded (source, key) pairs."""
+    uploaded = []
     for ext, content_type in [
         ("csv", "text/csv"),
         ("parquet", "application/octet-stream"),
@@ -284,7 +288,8 @@ def upload_lake_headline_se16(client, bucket):
         ]
         print(f"\nUploading {len(files):,.0f} {ext.upper()} files to R2")
         files_to_upload = [(f, f.replace(PATH_LOCAL_LAKE, "")) for f in files]
-        upload_bulk(client, bucket, files_to_upload, content_type=content_type)
+        uploaded += upload_bulk(client, bucket, files_to_upload, content_type=content_type)
+    return uploaded
 
 
 def make_catalogue_headline_se16():
@@ -387,7 +392,8 @@ if __name__ == "__main__":
     # ----- lake + catalogue: headline files touched by SE-16 only -----
     BUCKET_LAKE = os.getenv("R2_BUCKET_LAKE")
     make_lake_headline_se16()
-    upload_lake_headline_se16(CLIENT, BUCKET_LAKE)
+    UPLOADED_LAKE = upload_lake_headline_se16(CLIENT, BUCKET_LAKE)
+    write_lake_manifest(CLIENT, BUCKET_LAKE, UPLOADED_LAKE)
 
     make_catalogue_headline_se16()
     upload_catalogue_headline_se16(CLIENT, BUCKET_INTERNAL)

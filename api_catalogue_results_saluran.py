@@ -5,6 +5,7 @@ Generates CSV/Excel exports and catalogue JSON files for saluran-level results d
 It:
 - Reads all saluran parquet files and writes CSV and versions
 - Uploads all saluran files (parquet, csv) to the lake R2 bucket
+- Updates the lake freshness manifest once those uploads succeed
 - Reads catalogue index to get all Saluran-Level dataset entries
 - Fills saluran-ballots or saluran-stats template per entry
 - Uploads all catalogue JSONs to the internal R2 bucket and purges the CF cache
@@ -17,6 +18,7 @@ Inputs:
 
 Outputs:
 - lake.electiondata.my/results_saluran/*.csv uploaded to R2
+- core-freshness.json updated in R2 meco-lake
 - internal.electiondata.my/catalogue/results_saluran/{id}.json uploaded to R2
 """
 
@@ -27,7 +29,7 @@ from datetime import datetime
 from glob import glob as g
 import pandas as pd
 from dotenv import load_dotenv
-from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix
+from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix, write_lake_manifest
 
 load_dotenv()
 
@@ -81,7 +83,7 @@ def upload_saluran_files(client, bucket):
     files = g(f"{PATH_LOCAL_LAKE}results_saluran/*")
     print(f"\nUploading {len(files):,.0f} files to lake R2")
     files_to_upload = sorted([(f, f.replace(PATH_LOCAL_LAKE, "")) for f in files])
-    upload_bulk(client, bucket, files_to_upload, max_workers=60)
+    return upload_bulk(client, bucket, files_to_upload, max_workers=60)
 
 
 def _build_catalogue(template, entry):
@@ -174,7 +176,8 @@ if __name__ == "__main__":
     save_csv()
 
     # Task 2: Upload all saluran files to lake R2
-    upload_saluran_files(CLIENT_LAKE, BUCKET_LAKE)
+    UPLOADED = upload_saluran_files(CLIENT_LAKE, BUCKET_LAKE)
+    write_lake_manifest(CLIENT_LAKE, BUCKET_LAKE, UPLOADED)
 
     # Task 3: Generate catalogue JSONs and upload to internal R2
     make_results_saluran()

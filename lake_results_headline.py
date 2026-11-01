@@ -7,6 +7,7 @@ It:
 - Writes sliced outputs (all, federal, by-elections, per-state state elections)
 - Copies the lookup tables (CSV and Parquet) from PATH_RESULTS_HEADLINE
 - Uploads all CSV, Parquet, and Excel outputs to R2 meco-lake
+- Updates the lake freshness manifest last, once every upload has succeeded
 
 Inputs:
 - PATH_RESULTS_HEADLINE/consol_ballots.parquet
@@ -16,6 +17,7 @@ Inputs:
 Outputs:
 - lake.electiondata.my/results_headline/headline_{v}[_{slice}].{csv,parquet,xlsx} uploaded to R2
 - lake.electiondata.my/results_headline/lookup_{v}.{csv,parquet} uploaded to R2
+- core-freshness.json updated in R2 meco-lake
 """
 
 import os
@@ -27,7 +29,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from helper import write_csv_parquet_excel, get_states
-from helper import get_r2_client, upload_bulk
+from helper import get_r2_client, upload_bulk, write_lake_manifest
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -78,8 +80,9 @@ def make_lookups():
 
 
 def upload_headline_results(client, bucket):
-    """Upload all headline results files to R2 meco-lake."""
+    """Upload all headline results files to R2 meco-lake; return the uploaded (source, key) pairs."""
     prefix = f"{PATH_LOCAL_LAKE}results_headline/"
+    uploaded = []
 
     for ext, content_type in [
         ("csv", "text/csv"),
@@ -89,7 +92,8 @@ def upload_headline_results(client, bucket):
         files = sorted(g(f"{prefix}*.{ext}"))
         print(f"\nUploading {len(files):,.0f} {ext.upper()} files to R2")
         files_to_upload = [(f, f.replace(PATH_LOCAL_LAKE, "")) for f in files]
-        upload_bulk(client, bucket, files_to_upload, content_type=content_type)
+        uploaded += upload_bulk(client, bucket, files_to_upload, content_type=content_type)
+    return uploaded
 
 
 if __name__ == "__main__":
@@ -101,7 +105,8 @@ if __name__ == "__main__":
 
     make_headline_results()
     make_lookups()
-    upload_headline_results(CLIENT, BUCKET_LAKE)
+    UPLOADED = upload_headline_results(CLIENT, BUCKET_LAKE)
+    write_lake_manifest(CLIENT, BUCKET_LAKE, UPLOADED)
 
     print(f'\nEnd: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f"Duration: {datetime.now() - START}")

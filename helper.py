@@ -2,7 +2,10 @@
 
 import os
 import re
+import json
 import time
+import hashlib
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 from typing import List
@@ -161,9 +164,9 @@ def get_r2_client():
 def get_transfer_config():
     """Get optimized transfer configuration."""
     return TransferConfig(
-        multipart_threshold=1024 * 25,
+        multipart_threshold=1024 * 1024 * 25,
         max_concurrency=10,
-        multipart_chunksize=1024 * 25,
+        multipart_chunksize=1024 * 1024 * 25,
         use_threads=True,
     )
 
@@ -217,6 +220,9 @@ def upload_bulk(
         content_type: Content type of the files
         retry_passes: Number of sequential retry passes for failed files
 
+    Returns:
+        list: the (source_file, cloud_file) tuples, all uploaded successfully
+
     Raises:
         RuntimeError: if any file still fails after all retry passes
     """
@@ -253,7 +259,87 @@ def upload_bulk(
             f"{len(failed):,.0f} files failed to upload to {bucket}:\n"
             + "\n".join(cloud for _, cloud in failed)
         )
-    return []
+    return list(files_to_upload)
+
+
+LAKE_MANIFEST_KEY = "core-freshness.json"
+LAKE_MANIFEST_EXCLUDE = ("maps/",)
+
+
+def _md5_file(path, chunk_size=1024 * 1024 * 8):
+    """Return the hex MD5 of a file's bytes."""
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def write_lake_manifest(client, bucket, uploaded):
+    """Update the lake freshness manifest after a run's uploads have all succeeded.
+
+    The MCP server polls this manifest and only syncs when it changes, so it must be
+    written last. Entries for parquet files uploaded in this run are refreshed; entries
+    for files that no longer exist in the bucket are dropped; entries for other files
+    are carried over unchanged, so jobs that write different folders share one manifest.
+
+    Args:
+        client: R2 client
+        bucket: lake bucket
+        uploaded: (source_file, cloud_file) tuples uploaded in this run; non-parquet
+            files and excluded prefixes (maps/) are ignored
+    """
+    try:
+        manifest = json.loads(client.get_object(Bucket=bucket, Key=LAKE_MANIFEST_KEY)["Body"].read())
+    except client.exceptions.NoSuchKey:
+        manifest = {"files": {}}
+    files = manifest.get("files", {})
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    this_run = set()
+    for source, cloud in uploaded:
+        if not cloud.endswith(".parquet") or cloud.startswith(LAKE_MANIFEST_EXCLUDE):
+            continue
+        files[cloud] = {"md5": _md5_file(source), "size": os.path.getsize(source), "updated_at": now}
+        this_run.add(cloud)
+
+    live = {}
+    for page in client.get_paginator("list_objects_v2").paginate(Bucket=bucket):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            if key.endswith(".parquet") and not key.startswith(LAKE_MANIFEST_EXCLUDE):
+                live[key] = obj["Size"]
+
+    missing = sorted(k for k in this_run if k not in live)
+    mismatched = sorted(k for k in this_run if k in live and files[k]["size"] != live[k])
+    if missing or mismatched:
+        raise RuntimeError(
+            "Manifest not written; files uploaded in this run are missing from the bucket "
+            "or differ in size:\n" + "\n".join(missing + mismatched)
+        )
+    # Carried-over entries that vanished or were overwritten outside this flow are stale.
+    stale = sorted(k for k in files if k not in this_run and files[k]["size"] != live.get(k))
+    gone = [k for k in stale if k not in live]
+    changed = [k for k in stale if k in live]
+    for k in stale:
+        del files[k]
+    if changed:
+        print(f"WARNING: dropped {len(changed):,.0f} stale manifest entries (size changed outside this flow):")
+        print("\n".join(f"  {k}" for k in changed))
+    dropped = gone
+    untracked = sorted(k for k in live if k not in files)
+
+    manifest = {"generated_at": now, "files": dict(sorted(files.items()))}
+    client.put_object(
+        Bucket=bucket,
+        Key=LAKE_MANIFEST_KEY,
+        Body=json.dumps(manifest, indent=1).encode("utf-8"),
+        ContentType="application/json",
+    )
+    print(f"\nWrote {LAKE_MANIFEST_KEY}: {len(files):,.0f} files, {len(dropped):,.0f} dropped")
+    if untracked:
+        print(f"WARNING: {len(untracked):,.0f} parquet file(s) in {bucket} have no manifest entry:")
+        print("\n".join(f"  {k}" for k in untracked))
 
 
 def purge_cf_cache(file_keys: list[str], base_url: str) -> None:
