@@ -121,5 +121,66 @@ Generates catalogue JSON entries for the headline results datasets published to 
 ### Utilities
 
 #### `helper.py`
-Shared utilities: `write_parquet`, R2 client setup, bulk upload/copy, Cloudflare cache purge, slug generation, and column schema constants.
+Shared utilities: `write_parquet`, R2 client setup, bulk upload/copy, Cloudflare cache purge, the lake freshness manifest (`write_lake_manifest`), slug generation, and column schema constants.
 
+---
+
+## Lake freshness manifest
+
+`core-freshness.json` sits at the root of the `meco-lake` bucket and lists every core parquet in the lake with its MD5. The MCP server (`mcp.electiondata.my`) polls it and syncs only the files whose MD5 changed. It checks the downloaded bytes against the manifest before applying anything, and runs a full rclone sync hourly as a fallback. See `meco-back/mcp-server/README.md`, "Data refresh", for that side.
+
+### Format
+
+```json
+{
+  "generated_at": "2026-11-01T03:21:30Z",
+  "files": {
+    "results_headline/lookup_party.parquet": {
+      "md5": "f1cc3aa29f7ac7a8b42789621925de29",
+      "size": 11142,
+      "updated_at": "2026-11-01T03:21:30Z"
+    }
+  }
+}
+```
+
+- Keys are full R2 object keys, sorted.
+- `md5` is the hex MD5 of the file's bytes, computed locally when the file is uploaded. Don't rely on R2 ETags: files uploaded in several parts have ETags that aren't MD5s.
+- `updated_at` is when that file was last uploaded (UTC); `generated_at` is when the manifest was last written.
+
+### How it's written
+
+`helper.write_lake_manifest(client, bucket, uploaded)` is the only writer. It runs once at the end of a script, after every lake upload in that run has succeeded. The manifest is written **last** because the MCP server treats a new manifest as "this set of files is complete". If it were written earlier, the server could load a mix of old and new files mid-run.
+
+`uploaded` is the list of `(local_path, r2_key)` pairs the run uploaded; `upload_bulk` returns this list. The helper then:
+
+1. **Merges:** reads the live manifest from the bucket (or starts empty). It refreshes the entries for core parquets uploaded in this run and keeps all other entries, so scripts that write different folders share one manifest. There is no local copy; the bucket version is the only one.
+2. **Checks this run's files:** lists the bucket. If any core parquet uploaded in this run is missing, or its live size differs from the local file, it raises and leaves the old manifest untouched.
+3. **Prunes:** drops entries for files no longer in the bucket. It also drops kept entries whose live size has changed, meaning the file was overwritten without this helper; it prints a warning for those.
+4. **Warns** about core parquets in the bucket that have no entry.
+5. **Writes** the manifest with a new `generated_at`.
+
+These scripts call it after their lake uploads:
+
+| Script | Lake folder |
+|--------|-------------|
+| `lake_results_headline.py` | `results_headline/` |
+| `api_election_night.py` | `results_headline/` (election-night subset) |
+| `api_catalogue_results_saluran.py` | `results_saluran/` |
+| `api_catalogue_voter_rolls.py` | `voter_rolls/` |
+
+Any new or one-off script that uploads core parquets to the lake must also call it at the end. Otherwise the MCP server won't pick the files up until its hourly full sync.
+
+### Scope: core parquets only
+
+`LAKE_MANIFEST_CORE` in `helper.py` lists the files tracked. It mirrors the tables in `meco-back/mcp-server/docs.yaml`:
+
+- `results_headline/headline_ballots.parquet`, `results_headline/headline_stats.parquet`
+- `results_headline/lookup_*.parquet`
+- `results_saluran/*_ballots.parquet`, `results_saluran/*_stats.parquet`
+- `voter_rolls/*.parquet`
+- `seat_info/*.parquet`
+
+Convenience slices (`headline_*_federal`, `_byelections`, `_state_*`), `consol_*` and `maps/` are never listed, even when a run uploads them. **If a table is added to `docs.yaml`, add a matching pattern to `LAKE_MANIFEST_CORE`.**
+
+`seat_info/` is not written by meco-etl yet (see `TODO.md`). Its entries came from a one-off seed on 2026-11-01. If it is re-uploaded from elsewhere with a different size, the next run drops its entries with a warning, and the hourly full sync covers it.
