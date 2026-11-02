@@ -246,6 +246,7 @@ def make_seats():
     dun_rolls = {
         "-johor": (f"{PATH_VR}jhr_se16_2026.parquet", 2026),
         "-negeri-sembilan": (f"{PATH_VR}nsn_se16_2026.parquet", 2026),
+        "-melaka": (f"{PATH_VR}mlk_se16_2026.parquet", 2026),
     }
 
     pyramid = get_voter_pyramid_from_vr(f"{PATH_VR}ge15_2022.parquet", reference_year=2022)
