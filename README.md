@@ -57,6 +57,12 @@ Pending elections need no flag. Once upstream `consol_ballots.parquet` has the c
 
 The `last_updated` field in `template-catalogue/headline-*.json` is overwritten by `api_catalogue_results_headline.py` and has no effect.
 
+### When saluran data is ready
+
+7. **Saluran files.** Copy `{code}_se{n}_{ballots,stats}.parquet` from `paper-meco-saluran/data/` into `lake.electiondata.my/results_saluran/`. Add the `saluran-{ballots,stats}-{code}-se{n}` entries at the top of the state's `Saluran-Level (...)` block in `catalogue/index.json`, with `data_as_of` set to polling day.
+8. **Voter roll alignment.** The saluran files are aligned to the *current* public roll in `PATH_VR`. Check that the roll in `lake.electiondata.my/voter_rolls/` matches it, so `dm, pm, saluran` join exactly. If the public roll has been refreshed since, copy it over, upload that roll (parquet and CSV) and run `write_lake_manifest`, then regenerate the voter roll catalogue with the functions in `api_catalogue_voter_rolls.py`. Running the full script re-uploads every roll's CSV, about 12 GB.
+9. **Publish.** Run `api_catalogue_results_saluran.py`, then `api_catalogue_index.py` so the new entries show in the catalogue.
+
 ---
 
 ## Script reference
