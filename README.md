@@ -49,7 +49,7 @@ Pending elections need no flag. Once upstream `consol_ballots.parquet` has the c
 
 ### When the voter roll is available
 
-5. **Voter roll.** Add the state to `dun_rolls` in `api_seats_current.py`, keyed by the full-name slug suffix (e.g. `"-melaka"`, not `"-mlk"`), pointing at `{PATH_VR}{code}_se{n}_{year}.parquet`. Re-run `api_seats_current.py`.
+5. **Voter roll.** Add the state to `dun_rolls` in `api_seats_current.py`, keyed by the full-name slug suffix (e.g. `"-melaka"`, not `"-mlk"`), pointing at `{PATH_VR}{code}_se{n}_{year}.parquet`. Re-run `api_seats_current.py`. Then run `lake_seat_info.py`: it picks up every roll in `PATH_VR` by filename, so the new election's DUN demographics land in `seat_info/` with no code change. It dates rows from `consol_stats.parquet`, so the election must already be in the headline results.
 
 ### Polling day
 
@@ -113,6 +113,9 @@ Uploads the homepage's `latest.json` (maintained by hand, gitignored) and the OG
 #### `lake_results_headline.py`
 Writes headline election results to the data lake in CSV, Parquet, and Excel formats, sliced by scope (all, federal only, by-elections, per-state). Independent of the main pipeline — reads directly from upstream parquets.
 
+#### `lake_seat_info.py`
+Builds per-seat voter demographics (sex, age band, ethnicity, voter type) from every public voter roll in `PATH_VR`, and uploads `seat_info/demographics{,_sabah,_sarawak}.parquet` to the lake. GE rolls give Parliament and DUN rows; SE rolls give DUN rows only. Each row's date comes from `consol_stats.parquet`, so it joins to results on `date, election, state, seat`. Raises if any breakdown doesn't sum to `voters_total`, or a contested seat isn't in the results. `--skip-upload` builds and checks locally only. Used by the query builder (meco-front) and the MCP server.
+
 #### `api_catalogue_results_headline.py`
 Generates catalogue JSON entries for the headline results datasets published to the lake. Reads the catalogue index and per-file stats/samples from `lake.electiondata.my/`.
 
@@ -165,6 +168,7 @@ These scripts call it after their lake uploads:
 | Script | Lake folder |
 |--------|-------------|
 | `lake_results_headline.py` | `results_headline/` |
+| `lake_seat_info.py` | `seat_info/` |
 | `api_election_night.py` | `results_headline/` (election-night subset) |
 | `api_catalogue_results_saluran.py` | `results_saluran/` |
 | `api_catalogue_voter_rolls.py` | `voter_rolls/` |
@@ -182,5 +186,3 @@ Any new or one-off script that uploads core parquets to the lake must also call 
 - `seat_info/*.parquet`
 
 Convenience slices (`headline_*_federal`, `_byelections`, `_state_*`), `consol_*` and `maps/` are never listed, even when a run uploads them. **If a table is added to `docs.yaml`, add a matching pattern to `LAKE_MANIFEST_CORE`.**
-
-`seat_info/` is not written by meco-etl yet (see `TODO.md`). Its entries came from a one-off seed on 2026-11-01. If it is re-uploaded from elsewhere with a different size, the next run drops its entries with a warning, and the hourly full sync covers it.
