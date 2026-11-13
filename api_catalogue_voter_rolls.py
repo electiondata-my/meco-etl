@@ -40,6 +40,11 @@ RESULTS_DIR = Path(PATH_LOCAL_LAKE) / "voter_rolls"
 
 FORMAT_EXTS = {"parquet": ".parquet", "csv": ".csv"}
 
+# Rolls published after the template's last_updated carry their own date
+LAST_UPDATED = {
+    "voter-roll-anonymised-mlk-se16": "2026-11-14",
+}
+
 VR_LEVELS = [
     "Federal Elections",
     "Kedah State Elections",
@@ -103,6 +108,8 @@ def _build_catalogue(template, entry):
     cat = json.loads(cat_str)
 
     cat["data_as_of"] = entry["data_as_of"]
+    if entry["id"] in LAST_UPDATED:
+        cat["last_updated"] = LAST_UPDATED[entry["id"]]
 
     for fmt, ext in FORMAT_EXTS.items():
         fp = RESULTS_DIR / (stem + ext)
