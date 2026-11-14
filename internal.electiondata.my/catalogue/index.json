@@ -6,13 +6,13 @@
                     "id": "headline-ballots",
                     "title": "All Elections: Ballots",
                     "description": "Candidate-level results, party affiliations, and demographic details for every contest from 1955-present.",
-                    "data_as_of": "2026-10-31"
+                    "data_as_of": "2026-11-14"
                 },
                 {
                     "id": "headline-stats",
                     "title": "All Elections: Statistics",
                     "description": "Seat-level stats (voter turnout, rejected votes, etc) for every contest from 1955-present.",
-                    "data_as_of": "2026-10-31"
+                    "data_as_of": "2026-11-14"
                 },
                 {
                     "id": "headline-ballots-federal",
@@ -138,13 +138,13 @@
                     "id": "headline-ballots-state-mlk",
                     "title": "Melaka DUN Elections (PRN): Ballots",
                     "description": "Candidate-level results, party affiliations, and demographic details for every Melaka state contest from 1959-present.",
-                    "data_as_of": "2026-10-31"
+                    "data_as_of": "2026-11-14"
                 },
                 {
                     "id": "headline-stats-state-mlk",
                     "title": "Melaka DUN Elections (PRN): Statistics",
                     "description": "Seat-level stats (voter turnout, rejected votes, etc) for every Melaka state contest from 1959-present.",
-                    "data_as_of": "2026-10-31"
+                    "data_as_of": "2026-11-14"
                 },
                 {
                     "id": "headline-ballots-state-jhr",
