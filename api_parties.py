@@ -214,8 +214,12 @@ def make_parties_df():
 
     df = df.drop(columns=["party_uid", "party", "known_as_uid", "known_as"])
     df = df.groupby(col_idx[4:]).sum().reset_index()
-    df.seats_total = ((df.seats_contested * 100) / (df.seats_contested_perc)).round(0).astype(int)
-    df.votes_total = ((df.votes * 100) / (df.votes_perc)).round(0).fillna(0).astype(int)
+    # Totals are per election+state, so take them straight from sf. Back-deriving them from
+    # the percentages breaks mid-count: a coalition with no votes yet gives 0/0 -> 0.
+    cols = list(df.columns)
+    df = df.drop(columns=["seats_total", "votes_total"]).merge(sf, on=col_idx_sf, how="left")[cols]
+    df.seats_total = df.seats_total.astype(int)
+    df.votes_total = df.votes_total.astype(int)
     for c in ["votes_total", "seats_total"]:
         assert len(df.drop_duplicates(subset=["election_name", "state"])) == len(
             df.drop_duplicates(subset=["election_name", "state", c])
