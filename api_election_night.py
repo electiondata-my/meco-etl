@@ -1,14 +1,14 @@
 """
 Module: api_election_night.py
 
-Runs the full pipeline for the internal site, but restricts the public API upload to the Negeri Sembilan SE-16 election only.
+Runs the full pipeline for the internal site, but restricts the public API upload to one election, given on the command line.
 It:
 - Regenerates and uploads the internal candidates, parties and seats/current files (dropdown + all.json)
-- Regenerates the internal election files, but uploads only elections/all.json and elections/Negeri Sembilan/SE-16.json
-- Regenerates and uploads the internal results files for the SE-16 polling date only
-- Derives the SE-16 contestants (candidates, parties, coalitions, seats) from consol_ballots
-- Uploads to the API bucket only: the SE-16 candidates, their parties/coalitions (Negeri Sembilan-dun), the 36 Negeri Sembilan duns, the Negeri Sembilan SE-16 election, and the 36 SE-16 results files
-- Regenerates and uploads the lake headline files touched by SE-16 (headline_{ballots,stats} and their state_nsn slices)
+- Regenerates the internal election files, but uploads only elections/all.json and elections/{STATE}/{ELECTION}.json
+- Regenerates and uploads the internal results files for the {ELECTION} polling date only
+- Derives the {ELECTION} contestants (candidates, parties, coalitions, seats) from consol_ballots
+- Uploads to the API bucket only: the {ELECTION} candidates, their parties/coalitions ({STATE}-dun), the {STATE} duns, the {STATE} {ELECTION} election, and the {ELECTION} results files
+- Regenerates and uploads the lake headline files touched by {ELECTION} (headline_{ballots,stats} and their state_{STATE_CODE} slices)
 - Updates the lake freshness manifest once those lake uploads succeed
 - Refreshes data_as_of in the catalogue index for those datasets, rebuilds their catalogue JSONs, and uploads both
 
@@ -22,20 +22,24 @@ Inputs:
 
 Outputs:
 - internal.electiondata.my/{candidates,parties,seats/current}/{dropdown,all}.json uploaded to R2
-- internal.electiondata.my/elections/{all.json,Negeri Sembilan/SE-16.json} uploaded to R2
-- internal.electiondata.my/results/{seat}/2026-08-01.json uploaded to R2
-- api.electiondata.my/v1/candidates/{uid}.json uploaded to R2 (SE-16 candidates only)
-- api.electiondata.my/v1/{parties,coalitions}/{uid}/Negeri Sembilan-dun.json uploaded to R2 (SE-16 parties only)
-- api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2 (36 Negeri Sembilan duns only)
-- api.electiondata.my/v1/elections/Negeri Sembilan/SE-16-*.json uploaded to R2
-- api.electiondata.my/v1/results/{seat}/2026-08-01.json copied to R2 (36 files)
-- lake.electiondata.my/results_headline/headline_{ballots,stats}[_state_nsn].{csv,parquet,xlsx} uploaded to R2
+- internal.electiondata.my/elections/{all.json,{STATE}/{ELECTION}.json} uploaded to R2
+- internal.electiondata.my/results/{seat}/{DATE}.json uploaded to R2
+- api.electiondata.my/v1/candidates/{uid}.json uploaded to R2 ({ELECTION} candidates only)
+- api.electiondata.my/v1/{parties,coalitions}/{uid}/{STATE}-dun.json uploaded to R2 ({ELECTION} parties only)
+- api.electiondata.my/v1/seats/current/{slug}.json uploaded to R2 ({STATE} duns only)
+- api.electiondata.my/v1/elections/{STATE}/{ELECTION}-*.json uploaded to R2
+- api.electiondata.my/v1/results/{seat}/{DATE}.json copied to R2 (one per seat)
+- lake.electiondata.my/results_headline/headline_{ballots,stats}[_state_{STATE_CODE}].{csv,parquet,xlsx} uploaded to R2
 - core-freshness.json updated in R2 meco-lake
 - internal.electiondata.my/catalogue/{index,headline-*}.json uploaded to R2
+
+Usage (meco-election-night's night.tick passes these from its election file):
+    .venv/bin/python api_election_night.py --date 2026-11-14 --election SE-16 --state Melaka --state-code mlk
 """
 
 import os
 import json
+import argparse
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -98,18 +102,34 @@ load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
 PATH_LOCAL_LAKE = "lake.electiondata.my/"
 
-DATE = "2026-08-01"
-ELECTION = "SE-16"
-STATE = "Negeri Sembilan"
-STATE_CODE = "nsn"
+# The election under way. Deliberately not baked in: a stale hard-coded election would
+# silently republish the wrong one. set_election() fills these from the command line.
+DATE = ELECTION = STATE = STATE_CODE = None
 
 # the catalogue datasets whose underlying data changes with this election
-HEADLINE_IDS = [
-    "headline-ballots",
-    "headline-stats",
-    f"headline-ballots-state-{STATE_CODE}",
-    f"headline-stats-state-{STATE_CODE}",
-]
+HEADLINE_IDS = []
+
+
+def set_election(date, election, state, state_code):
+    """Point every function in this module at one election."""
+    global DATE, ELECTION, STATE, STATE_CODE, HEADLINE_IDS  # pylint: disable=global-statement
+    DATE, ELECTION, STATE, STATE_CODE = date, election, state, state_code.lower()
+    HEADLINE_IDS = [
+        "headline-ballots",
+        "headline-stats",
+        f"headline-ballots-state-{STATE_CODE}",
+        f"headline-stats-state-{STATE_CODE}",
+    ]
+
+
+def parse_args(argv=None):
+    """The election to publish; every argument is required."""
+    ap = argparse.ArgumentParser(description="Publish one election's results surgically.")
+    ap.add_argument("--date", required=True, help="polling day, e.g. 2026-11-14")
+    ap.add_argument("--election", required=True, help="e.g. SE-16")
+    ap.add_argument("--state", required=True, help="state as in consol_ballots, e.g. Melaka")
+    ap.add_argument("--state-code", required=True, help="lowercase state code, e.g. mlk")
+    return ap.parse_args(argv)
 
 
 def get_se16_scope():
@@ -334,6 +354,8 @@ def upload_catalogue_headline_se16(client, bucket):
 
 
 if __name__ == "__main__":
+    ARGS = parse_args()
+    set_election(ARGS.date, ARGS.election, ARGS.state, ARGS.state_code)
     START = datetime.now()
     print(f'\nStart: {START.strftime("%Y-%m-%d %H:%M:%S")}')
 
