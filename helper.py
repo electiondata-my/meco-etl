@@ -290,6 +290,7 @@ LAKE_MANIFEST_CORE = (
     "results_saluran/*_stats.parquet",
     "voter_rolls/*.parquet",
     "seat_info/*.parquet",
+    "maps/lookup_*.parquet",
 )
 
 

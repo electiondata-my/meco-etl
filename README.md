@@ -46,22 +46,23 @@ Pending elections need no flag. Once upstream `consol_ballots.parquet` has the c
 2. **Homepage.** Make the state map images `og-image/{state}-se{n}.png` and `-dark.png` (1200×630) with the snippet in `paper-meco-maps/playground.ipynb` (one cell per election; filter to the state and adjust the zoom). Save them to `internal.electiondata.my/og-image/`, add the election at the top of `internal.electiondata.my/latest.json`, then run `api_latest.py`.
 3. **Run the pipeline** in the order above.
 4. **Lake and catalogue.** Run `lake_results_headline.py`. The new pending rows land in the national and state headline files, so set `data_as_of` to the nomination date in `internal.electiondata.my/catalogue/index.json` for `headline-{ballots,stats}` and `headline-{ballots,stats}-state-{code}`, then run `api_catalogue_results_headline.py`.
+5. **Delimitation lookup.** Add the election to `paper-meco-maps/data/delims_to_elections.csv` with the delimitation year each region uses (usually the same as the state's previous election; for a GE, one row for `Malaysia`), and commit it there. Then run `lake_maps_lookup.py`. It needs the pending rows from step 4 in `consol_stats.parquet`, and refuses to build while any election there is missing from the CSV. It checks every seat against the maps and uploads `maps/lookup_delimitation.parquet`, which the MCP uses to put the election's results on a map.
 
 ### When the voter roll is available
 
-5. **Voter roll.** Add the state to `dun_rolls` in `api_seats_current.py`, keyed by the full-name slug suffix (e.g. `"-melaka"`, not `"-mlk"`), pointing at `{PATH_VR}{code}_se{n}_{year}.parquet`. Re-run `api_seats_current.py`. Then run `lake_seat_info.py`: it picks up every roll in `PATH_VR` by filename, so the new election's DUN demographics land in `seat_info/` with no code change. It dates rows from `consol_stats.parquet`, so the election must already be in the headline results.
+6. **Voter roll.** Add the state to `dun_rolls` in `api_seats_current.py`, keyed by the full-name slug suffix (e.g. `"-melaka"`, not `"-mlk"`), pointing at `{PATH_VR}{code}_se{n}_{year}.parquet`. Re-run `api_seats_current.py`. Then run `lake_seat_info.py`: it picks up every roll in `PATH_VR` by filename, so the new election's DUN demographics land in `seat_info/` with no code change. It dates rows from `consol_stats.parquet`, so the election must already be in the headline results.
 
 ### Polling day
 
-6. **Election-night constants.** Point `api_election_night.py` at the new election: `DATE`, `ELECTION`, `STATE`, `STATE_CODE`, plus the state name and seat count in the docstrings. On run it also sets `data_as_of` in `catalogue/index.json` for `headline-{ballots,stats}` and the state's `headline-{ballots,stats}-state-{code}` slices, which is what the catalogue shows as `last_updated`.
+7. **Election-night constants.** Point `api_election_night.py` at the new election: `DATE`, `ELECTION`, `STATE`, `STATE_CODE`, plus the state name and seat count in the docstrings. On run it also sets `data_as_of` in `catalogue/index.json` for `headline-{ballots,stats}` and the state's `headline-{ballots,stats}-state-{code}` slices, which is what the catalogue shows as `last_updated`.
 
 The `last_updated` field in `template-catalogue/headline-*.json` is overwritten by `api_catalogue_results_headline.py` and has no effect.
 
 ### When saluran data is ready
 
-7. **Saluran files.** Copy `{code}_se{n}_{ballots,stats}.parquet` from `paper-meco-saluran/data/` into `lake.electiondata.my/results_saluran/`. Add the `saluran-{ballots,stats}-{code}-se{n}` entries at the top of the state's `Saluran-Level (...)` block in `catalogue/index.json`, with `data_as_of` set to polling day.
-8. **Voter roll alignment.** The saluran files are aligned to the *current* public roll in `PATH_VR`. Check that the roll in `lake.electiondata.my/voter_rolls/` matches it, so `dm, pm, saluran` join exactly. If the public roll has been refreshed since, copy it over, upload that roll (parquet and CSV) and run `write_lake_manifest`, then regenerate the voter roll catalogue with the functions in `api_catalogue_voter_rolls.py`. Running the full script re-uploads every roll's CSV, about 12 GB.
-9. **Publish.** Run `api_catalogue_results_saluran.py`, then `api_catalogue_index.py` so the new entries show in the catalogue.
+8. **Saluran files.** Copy `{code}_se{n}_{ballots,stats}.parquet` from `paper-meco-saluran/data/` into `lake.electiondata.my/results_saluran/`. Add the `saluran-{ballots,stats}-{code}-se{n}` entries at the top of the state's `Saluran-Level (...)` block in `catalogue/index.json`, with `data_as_of` set to polling day.
+9. **Voter roll alignment.** The saluran files are aligned to the *current* public roll in `PATH_VR`. Check that the roll in `lake.electiondata.my/voter_rolls/` matches it, so `dm, pm, saluran` join exactly. If the public roll has been refreshed since, copy it over, upload that roll (parquet and CSV) and run `write_lake_manifest`, then regenerate the voter roll catalogue with the functions in `api_catalogue_voter_rolls.py`. Running the full script re-uploads every roll's CSV, about 12 GB.
+10. **Publish.** Run `api_catalogue_results_saluran.py`, then `api_catalogue_index.py` so the new entries show in the catalogue.
 
 ---
 
@@ -122,6 +123,11 @@ Writes headline election results to the data lake in CSV, Parquet, and Excel for
 #### `lake_seat_info.py`
 Builds per-seat voter demographics (sex, age band, ethnicity, voter type) from every public voter roll in `PATH_VR`, and uploads `seat_info/demographics{,_sabah,_sarawak}.parquet` to the lake. GE rolls give Parliament and DUN rows; SE rolls give DUN rows only. Each row's date comes from `consol_stats.parquet`, so it joins to results on `date, election, state, seat`. Raises if any breakdown doesn't sum to `voters_total`, or a contested seat isn't in the results. `--skip-upload` builds and checks locally only. Used by the query builder (meco-front) and the MCP server.
 
+#### `lake_maps_lookup.py`
+Builds `maps/lookup_delimitation.parquet`: which delimitation (boundary set) was in force, per state and level (`parlimen`, `dun`), as date ranges. The source of truth is the curated `DELIMS_TO_ELECTIONS` CSV in paper-meco-maps; the script dates each election from `consol_stats.parquet` and merges consecutive elections on the same boundaries into one range, so by-elections resolve by date. Raises unless every contest, by-elections included, finds its seat name (without the `P.`/`N.` code, since Sabah and Sarawak Parliament seats get renumbered) in the delimitation its date resolves to, and every saluran DM is in the subdivision map wherever one exists. `--skip-upload` builds and checks locally only. Updates the lake freshness manifest after uploading. Lake only, not in the data catalogue. Used by the MCP server's `lookup_delimitation`, `map_election_seats` and `map_election_dm`, which put shapes on results.
+
+Rerun it for every new general or state election (see "Nomination day" above): it refuses to build while any election in `consol_stats.parquet` is missing from `DELIMS_TO_ELECTIONS`. By-elections need no rerun.
+
 #### `api_catalogue_results_headline.py`
 Generates catalogue JSON entries for the headline results datasets published to the lake. Reads the catalogue index and per-file stats/samples from `lake.electiondata.my/`.
 
@@ -175,6 +181,7 @@ These scripts call it after their lake uploads:
 |--------|-------------|
 | `lake_results_headline.py` | `results_headline/` |
 | `lake_seat_info.py` | `seat_info/` |
+| `lake_maps_lookup.py` | `maps/` (`lookup_delimitation.parquet` only) |
 | `api_election_night.py` | `results_headline/` (election-night subset) |
 | `api_catalogue_results_saluran.py` | `results_saluran/` |
 | `api_catalogue_voter_rolls.py` | `voter_rolls/` |
