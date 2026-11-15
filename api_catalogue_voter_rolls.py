@@ -29,7 +29,7 @@ from glob import glob as g
 import duckdb
 import pandas as pd
 from dotenv import load_dotenv
-from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix, write_lake_manifest
+from helper import ensure_parent, get_r2_client, upload_bulk, purge_cf_cache_prefix, write_lake_manifest
 
 load_dotenv()
 
@@ -150,7 +150,7 @@ def make_voter_rolls():
     for entry in entries:
         cat = _build_catalogue(template, entry)
         out_path = out_dir / f"{entry['id']}.json"
-        with open(out_path, "w", encoding="utf-8") as f:
+        with open(ensure_parent(out_path), "w", encoding="utf-8") as f:
             json.dump(cat, f, ensure_ascii=False)
         print(f"Written: {out_path}")
 

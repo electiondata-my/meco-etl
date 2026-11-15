@@ -39,7 +39,7 @@ import duckdb
 
 from dotenv import load_dotenv
 
-from helper import write_parquet, generate_slug
+from helper import ensure_parent, write_parquet, generate_slug
 from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix
 
 load_dotenv()
@@ -368,7 +368,7 @@ def make_elections_jsons():
                                 r["seat"] = seat_part
                                 r["state"] = state_part
                             records.append(r)
-                    with open(f"{base}-{c}.json", "w", encoding="utf-8") as f:
+                    with open(ensure_parent(f"{base}-{c}.json"), "w", encoding="utf-8") as f:
                         j.dump({c: records}, f)
 
                 os.makedirs(f"{PATH_LOCAL_INTERNAL}elections/{state}", exist_ok=True)
@@ -379,7 +379,7 @@ def make_elections_jsons():
 
                 all_data.setdefault(state, {}).setdefault(election_type, {})[election] = data
 
-    with open(f"{PATH_LOCAL_INTERNAL}elections/all.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}elections/all.json"), "w", encoding="utf-8") as f:
         j.dump(all_data, f, sort_keys=True)
 
 
@@ -430,7 +430,7 @@ def make_byelections_json():
     data = {"data": []}
     data["data"] = res
 
-    with open(f"{PATH_LOCAL_INTERNAL}elections/byelections.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}elections/byelections.json"), "w", encoding="utf-8") as f:
         j.dump(data, f)
 
 
@@ -456,7 +456,7 @@ def make_byelections_api_json():
 
     data["data"].sort(key=lambda r: r["date"], reverse=True)
 
-    with open(f"{PATH_LOCAL_API}byelections.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_API}byelections.json"), "w", encoding="utf-8") as f:
         j.dump({"byelections": data["data"]}, f)
     print("Wrote api elections/byelections.json")
 
@@ -490,7 +490,7 @@ def sync_dropdown_json_to_api(client, bucket):
     """Mirror elections/dropdown.json from the internal folder to the API R2 bucket."""
     with open(f"{PATH_LOCAL_INTERNAL}elections/dropdown.json", encoding="utf-8") as f:
         data = j.load(f)
-    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_API}dropdown.json"), "w", encoding="utf-8") as f:
         j.dump({"elections": data["elections"]}, f)
     upload_bulk(client, bucket, [(f"{PATH_LOCAL_API}dropdown.json", "v1/elections/dropdown.json")])
 

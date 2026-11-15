@@ -25,7 +25,7 @@ from datetime import date, datetime
 from glob import glob as g
 import geopandas as gpd
 from dotenv import load_dotenv
-from helper import get_r2_client, upload_bulk, purge_cf_cache_prefix
+from helper import ensure_parent, get_r2_client, upload_bulk, purge_cf_cache_prefix
 
 load_dotenv()
 
@@ -249,7 +249,7 @@ def _make_level(level, template_name):
     for slug, stem in sorted(_catalogue_targets(level).items()):
         cat = _build_catalogue(template, slug, stem, level)
         out_path = out_dir / f"{slug}.json"
-        with open(out_path, "w", encoding="utf-8") as f:
+        with open(ensure_parent(out_path), "w", encoding="utf-8") as f:
             json.dump(cat, f, ensure_ascii=False)
         print(f"Written: {out_path}")
 

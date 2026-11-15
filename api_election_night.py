@@ -47,6 +47,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from helper import (
+    ensure_parent,
     generate_slug,
     get_r2_client,
     upload_bulk,
@@ -336,7 +337,7 @@ def make_catalogue_headline_se16():
         template_key = "stats" if "stats" in entry["id"] else "ballots"
         cat = _build_catalogue(templates[template_key], entry)
         out_path = out_dir / f"{entry['id']}.json"
-        with open(out_path, "w", encoding="utf-8") as f:
+        with open(ensure_parent(out_path), "w", encoding="utf-8") as f:
             json.dump(cat, f, ensure_ascii=False)
         print(f"Written: {out_path}")
 

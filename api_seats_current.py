@@ -28,6 +28,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from helper import (
+    ensure_parent,
     generate_slug,
     get_voter_pyramid_from_vr,
     get_age_x_ethnicity_from_vr,
@@ -75,9 +76,9 @@ def make_seats():
     ][["seat", "slug", "type"]]
     slugs = df.slug.tolist()
     dropdown = df.to_dict(orient="records")
-    with open(f"{PATH_LOCAL_INTERNAL}seats/current/dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}seats/current/dropdown.json"), "w", encoding="utf-8") as f:
         j.dump({"data": dropdown}, f)
-    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_API}dropdown.json"), "w", encoding="utf-8") as f:
         j.dump({"seats": dropdown}, f)
 
     # ----- sf (seat frame): contains all results by seat; ff (filter frame): contains all lineage information by seat; left-joining allows us to pull out everything tagged to a current_seat -----
@@ -337,7 +338,7 @@ def make_seats():
             },
         }
 
-    with open(f"{PATH_LOCAL_INTERNAL}seats/current/all.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}seats/current/all.json"), "w", encoding="utf-8") as f:
         j.dump(all_data, f)
 
 
@@ -364,10 +365,10 @@ def make_seats_api():
             len(results),
         )
 
-        with open(f"{PATH_LOCAL_API}{slug}.json", "w", encoding="utf-8") as f:
+        with open(ensure_parent(f"{PATH_LOCAL_API}{slug}.json"), "w", encoding="utf-8") as f:
             j.dump({"results": results[:cutoff]}, f)
 
-        with open(f"{PATH_LOCAL_API}{slug}-lineage.json", "w", encoding="utf-8") as f:
+        with open(ensure_parent(f"{PATH_LOCAL_API}{slug}-lineage.json"), "w", encoding="utf-8") as f:
             j.dump({"results": results}, f)
 
     print(

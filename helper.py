@@ -1,6 +1,7 @@
 """Helper module for file operations, data processing, and S3 interactions."""
 
 import os
+from pathlib import Path
 import re
 import json
 import time
@@ -29,6 +30,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def ensure_parent(path):
+    """Create the folder a file is about to be written into, and return the path.
+
+    The output trees (internal./api./lake.electiondata.my) are gitignored, so a fresh
+    clone has almost none of their folders. Every writer goes through this so no run
+    depends on folders an earlier run happened to leave behind.
+    """
+    Path(str(path)).parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def write_parquet(filepath, df=None):
     """Write dataframe to Parquet format.
 
@@ -36,6 +48,7 @@ def write_parquet(filepath, df=None):
         filepath (str): Base path for the output file
         df (pd.DataFrame): DataFrame to write
     """
+    ensure_parent(filepath)
     df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
     print(f"Wrote Parquet: {filepath}")
 
@@ -47,6 +60,7 @@ def write_csv(filepath, df=None):
         filepath (str): Base path for the output file
         df (pd.DataFrame): DataFrame to write
     """
+    ensure_parent(filepath)
     df.to_csv(f"{filepath}.csv", index=False)
     print(f"Wrote CSV: {filepath}")
 
@@ -58,6 +72,7 @@ def write_csv_parquet(filepath, df=None):
         filepath (str): Base path for the output files
         df (pd.DataFrame): DataFrame to write
     """
+    ensure_parent(filepath)
     df.to_csv(f"{filepath}.csv", index=False)
     df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
     print(f"Wrote CSV + Parquet: {filepath}")
@@ -70,6 +85,7 @@ def write_csv_parquet_excel(filepath, df=None):
         filepath (str): Base path for the output files
         df (pd.DataFrame): DataFrame to write
     """
+    ensure_parent(filepath)
     df.to_csv(f"{filepath}.csv", index=False)
     df.to_parquet(f"{filepath}.parquet", index=False, compression="brotli")
 

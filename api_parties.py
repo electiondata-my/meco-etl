@@ -34,7 +34,7 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache_prefix
+from helper import ensure_parent, write_parquet, get_r2_client, upload_bulk, purge_cf_cache_prefix
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -289,7 +289,7 @@ def make_parties_jsons():
 
     data["data"] = df
 
-    with open(f"{PATH_LOCAL_INTERNAL}parties/dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}parties/dropdown.json"), "w", encoding="utf-8") as f:
         j.dump(data, f, ensure_ascii=False)
 
     # -------- all.json --------
@@ -348,7 +348,7 @@ def make_parties_jsons():
         for key, group in df.groupby("key", sort=True)
     }
 
-    with open(f"{PATH_LOCAL_INTERNAL}parties/all.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}parties/all.json"), "w", encoding="utf-8") as f:
         j.dump(all_data, f)
         print("Wrote parties/all.json")
 
@@ -360,7 +360,7 @@ def make_api_parties_jsons():
 
     with open(f"{PATH_LOCAL_INTERNAL}parties/dropdown.json", encoding="utf-8") as f:
         dropdown = j.load(f)
-    with open(f"{PATH_LOCAL_API_PARTIES}dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_API_PARTIES}dropdown.json"), "w", encoding="utf-8") as f:
         j.dump(dropdown, f, ensure_ascii=False)
     print("Wrote api parties/dropdown.json")
 
@@ -391,7 +391,7 @@ def make_api_parties_jsons():
             lookup.setdefault((r["state"], r["type"]), []).append(r)
 
         for state, election_type in COMBOS:
-            with open(f"{base_path}{state}-{election_type}.json", "w", encoding="utf-8") as f:
+            with open(ensure_parent(f"{base_path}{state}-{election_type}.json"), "w", encoding="utf-8") as f:
                 j.dump({"results": lookup.get((state, election_type), [])}, f, ensure_ascii=False)
 
     print(f"Wrote {party_count} party folders and {coalition_count} coalition folders (31 files each)")

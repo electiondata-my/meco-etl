@@ -9,6 +9,20 @@ internal.electiondata.my/*
 !internal.electiondata.my/catalogue/
 internal.electiondata.my/catalogue/*
 !internal.electiondata.my/catalogue/index.json
+
+# Inputs the election-night ETL reads but no step of it generates. Versioned so a fresh
+# clone (the election-night box) has them: elections/dropdown.json is hand-maintained;
+# the lineage parquets come from api_seats_lineage.py, whose source repo is private.
+!internal.electiondata.my/elections/
+internal.electiondata.my/elections/*
+!internal.electiondata.my/elections/dropdown.json
+!internal.electiondata.my/lineage/
+internal.electiondata.my/lineage/*
+!internal.electiondata.my/lineage/filter.parquet
+!internal.electiondata.my/lineage/desc.parquet
+!internal.electiondata.my/lineage/parlimen_geo.parquet
+!internal.electiondata.my/lineage/dun_geo.parquet
+
 lake.electiondata.my/*
 analysis*.py
 output/*

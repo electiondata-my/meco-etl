@@ -42,7 +42,7 @@ Pending elections need no flag. Once upstream `consol_ballots.parquet` has the c
 
 ### Nomination day
 
-1. **Elections dropdown.** Add the election by hand to `internal.electiondata.my/elections/dropdown.json` (gitignored, not generated), at the top of its state's block, e.g. `{"state":"Melaka","type":"dun","election":"SE-16","date":"2026-11-14"}`. `api_elections.py` uploads it to both buckets.
+1. **Elections dropdown.** Add the election by hand to `internal.electiondata.my/elections/dropdown.json` (hand-maintained, not generated; versioned in git so a fresh clone has it), at the top of its state's block, e.g. `{"state":"Melaka","type":"dun","election":"SE-16","date":"2026-11-14"}`. `api_elections.py` uploads it to both buckets.
 2. **Homepage.** Make the state map images `og-image/{state}-se{n}.png` and `-dark.png` (1200×630) with the snippet in `paper-meco-maps/playground.ipynb` (one cell per election; filter to the state and adjust the zoom). Save them to `internal.electiondata.my/og-image/`, add the election at the top of `internal.electiondata.my/latest.json`, then run `api_latest.py`.
 3. **Run the pipeline** in the order above.
 4. **Lake and catalogue.** Run `lake_results_headline.py`. The new pending rows land in the national and state headline files, so set `data_as_of` to the nomination date in `internal.electiondata.my/catalogue/index.json` for `headline-{ballots,stats}` and `headline-{ballots,stats}-state-{code}`, then run `api_catalogue_results_headline.py`.

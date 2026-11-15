@@ -26,7 +26,7 @@ import pandas as pd
 
 from dotenv import load_dotenv
 
-from helper import write_parquet, get_r2_client, upload_bulk, purge_cf_cache_prefix
+from helper import ensure_parent, write_parquet, get_r2_client, upload_bulk, purge_cf_cache_prefix
 
 load_dotenv()
 PATH_RESULTS_HEADLINE = os.getenv("PATH_RESULTS_HEADLINE")
@@ -125,7 +125,7 @@ def make_candidates_jsons():
         {k: (None if pd.isna(v) else v) for k, v in record.items()} for record in df
     ]  # proper JSON null
     data["data"] = df
-    with open(f"{PATH_LOCAL_INTERNAL}candidates/dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}candidates/dropdown.json"), "w", encoding="utf-8") as f:
         j.dump(data, f)
         print("Wrote candidates/dropdown.json")
 
@@ -155,7 +155,7 @@ def make_candidates_jsons():
         for slug, group in df.groupby("slug", sort=True)
     }
 
-    with open(f"{PATH_LOCAL_INTERNAL}candidates/all.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_INTERNAL}candidates/all.json"), "w", encoding="utf-8") as f:
         j.dump(all_data, f)
         print("Wrote candidates/all.json")
 
@@ -197,7 +197,7 @@ def make_api_candidates_jsons(uids=None):
     with open(f"{PATH_LOCAL_INTERNAL}candidates/dropdown.json", encoding="utf-8") as f:
         dropdown = j.load(f)
     dropdown["data"] = [{"uid": r.pop("slug"), **r} if "slug" in r else r for r in dropdown["data"]]
-    with open(f"{PATH_LOCAL_API}dropdown.json", "w", encoding="utf-8") as f:
+    with open(ensure_parent(f"{PATH_LOCAL_API}dropdown.json"), "w", encoding="utf-8") as f:
         j.dump({"candidates": dropdown["data"]}, f)
     print("Wrote api candidates/dropdown.json")
 
@@ -228,7 +228,7 @@ def make_api_candidates_jsons(uids=None):
                     new_contest["seat"] = parts[0]
                     new_contest["state"] = parts[1] if len(parts) > 1 else None
             new_contests.append(new_contest)
-        with open(f"{PATH_LOCAL_API}{uid}.json", "w", encoding="utf-8") as f:
+        with open(ensure_parent(f"{PATH_LOCAL_API}{uid}.json"), "w", encoding="utf-8") as f:
             j.dump({"results": new_contests}, f)
     print(f"Wrote {len(all_data):,.0f} individual candidate JSONs")
 
